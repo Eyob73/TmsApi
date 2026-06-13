@@ -1,5 +1,14 @@
 var builder = WebApplication.CreateBuilder(args);
 
+builder.Services.AddSingleton<EnrollmentWorker>();
+builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateScopes = true;
+    options.ValidateOnBuild = true;
+});
+
 builder.Services.AddControllers();
 
 builder.Services.AddAuthorization();
@@ -24,5 +33,11 @@ app.MapGet("/api/assessments/results", () => Results.Ok(new
     studentId = "S-001",
     letterGrade = "A"
 }));
+
+app.MapGet("/api/enrollments/worker-smoke", (EnrollmentWorker worker) =>
+{
+    worker.ProcessBatch();
+    return Results.Ok("processed");
+}); 
 
 app.Run();

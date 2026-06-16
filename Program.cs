@@ -2,6 +2,10 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
+builder.Services.AddScoped<IStudentService, StudentService>();
+builder.Services.AddScoped<ICourseService, CourseService>();
+
+builder.Services.AddProblemDetails();
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -22,7 +26,9 @@ var app = builder.Build();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseExceptionHandler("/error");
+app.UseExceptionHandler();
+
+app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
 
@@ -31,6 +37,13 @@ app.UseRouting();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.MapControllers();
+
+app.MapGet("/api/error", () =>
+{
+    throw new TmsDatabaseException("Simulated database failure for ProblemDetails testing");
+});
 
 app.MapGet("/api/assessments/results", () => Results.Ok(new
 {

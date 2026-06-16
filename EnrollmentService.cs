@@ -51,7 +51,7 @@ public class EnrollmentService : IEnrollmentService
     }
     public Task<bool> DeleteAsync(string id)
     {
-        var removed = _store.TryRemove(id, out _);
+        var removed = _store.Remove(id, out _);
         if (removed)
         {
             _logger.LogInformation("Deleted enrollment {EnrollmentId}", id);
@@ -64,3 +64,4 @@ public class EnrollmentService : IEnrollmentService
     }
 }
 public record EnrollmentRecord(string Id, string StudentId, string CourseCode, DateTime EnrolledAt);
+public record CreateEnrollmentRequest(string StudentId, string CourseCode);

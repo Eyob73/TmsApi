@@ -1,3 +1,5 @@
+using Scalar.AspNetCore;
+
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<EnrollmentWorker>();
@@ -6,6 +8,8 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 
 builder.Services.AddProblemDetails();
+
+builder.Services.AddOpenApi();
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -26,7 +30,16 @@ var app = builder.Build();
 
 app.UseMiddleware<RequestLoggingMiddleware>();
 
-app.UseExceptionHandler();
+if (!app.Environment.IsDevelopment())
+{
+    app.UseExceptionHandler();
+}
+
+if (app.Environment.IsDevelopment())
+{
+    app.MapOpenApi();
+    app.MapScalarApiReference();
+}
 
 app.UseStatusCodePages();
 
@@ -39,6 +52,8 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+
+app.MapGet("/_env", () => Results.Ok(new { env = app.Environment.EnvironmentName, isDevelopment = app.Environment.IsDevelopment() }));
 
 app.MapGet("/api/error", () =>
 {

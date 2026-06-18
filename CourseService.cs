@@ -1,14 +1,14 @@
 public interface ICourseService
 {
-    Task<Course?> GetByIdAsync(string id);
-    Task<IReadOnlyList<Course>> GetAllAsync();
+    Task<CourseDto?> GetByIdAsync(string id);
+    Task<IReadOnlyList<CourseDto>> GetAllAsync();
 }
 
 
 public class CourseService : ICourseService
 {
     private readonly ILogger<CourseService> _logger;
-    private readonly List<Course> _courses =
+    private readonly List<CourseDto> _courses =
     [
         new("CS101", "Introduction to Computer Science"),
         new("CS102", "Data Structures"),
@@ -21,7 +21,7 @@ public class CourseService : ICourseService
         _logger = logger;
     }
 
-    public Task<Course?> GetByIdAsync(string id)
+    public Task<CourseDto?> GetByIdAsync(string id)
     {
         var course = _courses.FirstOrDefault(c => c.Id == id);
         if (course is null)
@@ -35,11 +35,11 @@ public class CourseService : ICourseService
         return Task.FromResult(course);
     }
 
-    public Task<IReadOnlyList<Course>> GetAllAsync()
+    public Task<IReadOnlyList<CourseDto>> GetAllAsync()
     {
-        return Task.FromResult<IReadOnlyList<Course>>(_courses);
+        return Task.FromResult<IReadOnlyList<CourseDto>>(_courses);
     }
 }
-public record Course(string Id, string Name);
+public record CourseDto(string Id, string Name);
 
     

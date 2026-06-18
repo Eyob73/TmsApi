@@ -1,14 +1,14 @@
 public interface IStudentService
 {
-    Task<Student?> GetByIdAsync(string id);
-    Task<IReadOnlyList<Student>> GetAllAsync();
+    Task<StudentDto?> GetByIdAsync(string id);
+    Task<IReadOnlyList<StudentDto>> GetAllAsync();
 }
 
 
 public class StudentService : IStudentService
 {
     private readonly ILogger<StudentService> _logger;
-    private readonly List<Student> _students =
+    private readonly List<StudentDto> _students =
     [
         new("STU001", "Eyob Getachew"),
         new("STU002", "Abel Tesfaye"),
@@ -23,7 +23,7 @@ public class StudentService : IStudentService
 
     //
 
-    public Task<Student?> GetByIdAsync(string id)
+    public Task<StudentDto?> GetByIdAsync(string id)
     {
         var student = _students.FirstOrDefault(s => s.Id == id);
         if (student is null)
@@ -37,11 +37,11 @@ public class StudentService : IStudentService
         return Task.FromResult(student);
     }
 
-    public Task<IReadOnlyList<Student>> GetAllAsync()
+    public Task<IReadOnlyList<StudentDto>> GetAllAsync()
     {
 
-        return Task.FromResult<IReadOnlyList<Student>>(_students);
+        return Task.FromResult<IReadOnlyList<StudentDto>>(_students);
 
     }
 }
-public record Student(string Id, string Name);
+public record StudentDto(string Id, string Name);

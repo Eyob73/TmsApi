@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using TmsApi;
 
 [ApiController]
 [Route("api/students")]
@@ -9,6 +10,14 @@ public class StudentsController(IStudentService StudentService)
     public async Task<IActionResult> GetAll()
     {
         var students = await StudentService.GetAllAsync();
+        return Ok(students);
+    }
+
+    [HttpGet("paged/{page}")]
+    public async Task<IActionResult> GetPaged(int page)
+    {
+        var students = await StudentService.GetByNameAsync(page);
+        
         return Ok(students);
     }
 

@@ -14,6 +14,7 @@ public interface IReportsService
 
 public class ReportsService(TmsDbContext context) : IReportsService
 {
+
     public async Task<int> GetActiveStudentsCountAsync()
     {
         var count = await context.Students

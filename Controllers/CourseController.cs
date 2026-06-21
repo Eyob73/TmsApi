@@ -11,6 +11,13 @@ public class CoursesController(ICourseService CourseService)
         return Ok(courses);
     }
 
+    [HttpGet("top")]
+    public async Task<IActionResult> GetTopCourses(CancellationToken ct = default)
+    {
+        var topCourses = await CourseService.GetTopCoursesAsync(ct);
+        return Ok(topCourses);
+    }
+
     [HttpGet("{id}")]
     public async Task<IActionResult> GetById(string id)
     {

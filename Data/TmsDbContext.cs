@@ -5,9 +5,8 @@ namespace TmsApi.Data;
 
 public class TmsDbContext : DbContext
 {
-    public TmsDbContext(DbContextOptions<TmsDbContext> options) : base(options)
-    {
-    }
+    public TmsDbContext(DbContextOptions<TmsDbContext> options)
+        : base(options) { }
 
     public DbSet<Student> Students => Set<Student>();
     public DbSet<Course> Courses => Set<Course>();

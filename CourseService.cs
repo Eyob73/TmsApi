@@ -3,8 +3,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
-using Microsoft.Extensions.Logging;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using TmsApi.Data;
 using TmsApi.Entities;
 
@@ -13,9 +13,7 @@ public interface ICourseService
     Task<CourseDto?> GetByIdAsync(string id);
     Task<IReadOnlyList<CourseDto>> GetAllAsync();
     Task<IReadOnlyList<TopCourseDto>> GetTopCoursesAsync(CancellationToken ct = default);
-
 }
-
 
 public class CourseService : ICourseService
 {
@@ -28,8 +26,9 @@ public class CourseService : ICourseService
         new("CS102", "Data Structures"),
         new("CS103", "Algorithms"),
         new("CS104", "Web Development"),
-        new("CS105", "Database Systems")
+        new("CS105", "Database Systems"),
     ];
+
     public CourseService(ILogger<CourseService> logger, TmsDbContext context)
     {
         _logger = logger;
@@ -55,23 +54,27 @@ public class CourseService : ICourseService
         return Task.FromResult<IReadOnlyList<CourseDto>>(_courses);
     }
 
-    public async Task<IReadOnlyList<TopCourseDto>> GetTopCoursesAsync(CancellationToken ct = default)
+    public async Task<IReadOnlyList<TopCourseDto>> GetTopCoursesAsync(
+        CancellationToken ct = default
+    )
     {
-        var top = await _context.Enrollments
-            .GroupBy(e => e.CourseId)
+        var top = await _context
+            .Enrollments.GroupBy(e => e.CourseId)
             .Select(g => new { CourseId = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
             .Take(5)
-            .Join(_context.Courses,
-                  g => g.CourseId,
-                  c => c.Id,
-                  (g, c) => new TopCourseDto(c.Title, g.Count))
+            .Join(
+                _context.Courses,
+                g => g.CourseId,
+                c => c.Id,
+                (g, c) => new TopCourseDto(c.Title, g.Count)
+            )
             .ToListAsync(ct);
 
         return top;
     }
 }
-public record CourseDto(string Id, string Name);
-public record TopCourseDto(string Title, int EnrollmentCount);
 
-    
+public record CourseDto(string Id, string Name);
+
+public record TopCourseDto(string Title, int EnrollmentCount);

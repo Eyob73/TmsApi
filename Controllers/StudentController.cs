@@ -1,10 +1,10 @@
 using Microsoft.AspNetCore.Mvc;
 using TmsApi;
+using TmsApi.Entities;
 
 [ApiController]
 [Route("api/students")]
-public class StudentsController(IStudentService StudentService)
-    : ControllerBase
+public class StudentsController(IStudentService StudentService) : ControllerBase
 {
     [HttpGet("all")]
     public async Task<IActionResult> GetAll()
@@ -17,7 +17,7 @@ public class StudentsController(IStudentService StudentService)
     public async Task<IActionResult> GetPaged(int page)
     {
         var students = await StudentService.GetByNameAsync(page);
-        
+
         return Ok(students);
     }
 
@@ -26,8 +26,13 @@ public class StudentsController(IStudentService StudentService)
     {
         var student = await StudentService.GetByIdAsync(id);
 
-        return student is not null
-            ? Ok(student)
-            : NotFound();
+        return student is not null ? Ok(student) : NotFound();
+    }
+
+    [HttpPost("create")]
+    public async Task<IActionResult> Create(Student student)
+    {
+        var createdStudent = await StudentService.CreateAsync(student);
+        return CreatedAtAction(nameof(GetById), new { id = createdStudent.Id }, createdStudent);
     }
 }

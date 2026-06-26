@@ -15,6 +15,8 @@ public interface IStudentService
     Task<StudentDto?> GetByIdAsync(string id);
     Task<IReadOnlyList<StudentDto>> GetAllAsync();
     Task<IReadOnlyList<StudentDto>> GetByNameAsync(int page = 1, CancellationToken ct = default);
+    Task<Student> CreateAsync(Student student, CancellationToken cancellationToken = default);
+    Task<Student> UpdateAsync(Student student, CancellationToken cancellationToken = default);
 }
 
 public class StudentService : IStudentService
@@ -22,14 +24,7 @@ public class StudentService : IStudentService
     private readonly ILogger<StudentService> _logger;
     private readonly TmsDbContext _context;
 
-    private readonly List<StudentDto> _students = new List<StudentDto>
-    {
-        new(1, "STU001", "Eyob Getachew", 3.8m, true),
-        new(2, "STU002", "Abel Tesfaye", 3.6m, true),
-        new(3, "STU003", "Sara Mohammed", 3.9m, true),
-        new(4, "STU004", "John Smith", 3.5m, true),
-        new(5, "STU005", "Helen Bekele", 3.7m, false),
-    };
+    private readonly List<StudentDto> _students = new List<StudentDto>();
 
     public StudentService(ILogger<StudentService> logger, TmsDbContext context)
     {
@@ -51,9 +46,18 @@ public class StudentService : IStudentService
         return Task.FromResult(student);
     }
 
-    public Task<IReadOnlyList<StudentDto>> GetAllAsync()
+    public async Task<IReadOnlyList<StudentDto>> GetAllAsync()
     {
-        return Task.FromResult<IReadOnlyList<StudentDto>>(_students);
+        return await _context
+            .Students.Select(s => new StudentDto(
+                s.Id,
+                s.RegistrationNumber,
+                s.Name,
+                s.GPA,
+                s.IsActive,
+                EF.Property<DateTime>(s, "LastUpdated")
+            ))
+            .ToListAsync();
     }
 
     public async Task<IReadOnlyList<StudentDto>> GetByNameAsync(
@@ -68,10 +72,44 @@ public class StudentService : IStudentService
             .Students.OrderBy(s => s.Name)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
-            .Select(s => new StudentDto(s.Id, s.RegistrationNumber, s.Name, s.GPA, s.IsActive))
+            .Select(s => new StudentDto(
+                s.Id,
+                s.RegistrationNumber,
+                s.Name,
+                s.GPA,
+                s.IsActive,
+                EF.Property<DateTime>(s, "LastUpdated")
+            ))
             .ToListAsync(ct);
 
         return students;
+    }
+
+    public async Task<Student> CreateAsync(
+        Student student,
+        CancellationToken cancellationToken = default
+    )
+    {
+        _context.Students.Add(student);
+
+        _context.Entry(student).Property("LastUpdated").CurrentValue = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+
+        return student;
+    }
+
+    public async Task<Student> UpdateAsync(
+        Student student,
+        CancellationToken cancellationToken = default
+    )
+    {
+        _context.Students.Update(student);
+
+        _context.Entry(student).Property("LastUpdated").CurrentValue = DateTime.UtcNow;
+
+        await _context.SaveChangesAsync(cancellationToken);
+        return student;
     }
 }
 
@@ -80,5 +118,6 @@ public record StudentDto(
     string RegistrationNumber,
     string Name,
     decimal GPA,
-    bool IsActive
+    bool IsActive,
+    DateTime LastUpdated
 );

@@ -1,8 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+
 [ApiController]
 [Route("api/courses")]
-public class CoursesController(ICourseService CourseService)
-    : ControllerBase
+public class CoursesController(ICourseService CourseService) : ControllerBase
 {
     [HttpGet("all")]
     public async Task<IActionResult> GetAll()
@@ -23,8 +23,6 @@ public class CoursesController(ICourseService CourseService)
     {
         var course = await CourseService.GetByIdAsync(id);
 
-        return course is not null
-            ? Ok(course)
-            : NotFound();
+        return course is not null ? Ok(course) : NotFound();
     }
 }

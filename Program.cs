@@ -18,6 +18,7 @@ builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
+builder.Services.AddScoped<IAdminService, AdminService>();
 
 builder.Services.AddProblemDetails();
 
@@ -219,6 +220,26 @@ using (var scope = app.Services.CreateScope())
         .ToListAsync(cancellationToken);
     foreach (var s in students)
         Console.WriteLine($"{s.Name}: {s.Enrollments.Count} enrollments");
+}
+
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
+    var students = await db
+        .Students.Select(s => new
+        {
+            s.Id,
+            s.Name,
+            s.RegistrationNumber,
+        })
+        .ToListAsync();
+
+    if (students is null)
+    {
+        app.Logger.LogWarning("No Student Found");
+    }
+    else
+        app.Logger.LogInformation("Found {Count} Students", students.Count);
 }
 
 app.Run();

@@ -11,22 +11,13 @@ using Tms.Api.Dtos;
 
 namespace Tms.Api.Services;
 
-public class CourseService : ICourseService
+public class CourseService(TmsDbContext context, ILogger<CourseService> logger) : ICourseService
 {
-    private readonly ILogger<CourseService> _logger;
-    private readonly TmsDbContext _context;
-
-    private readonly List<CourseDto> _courses = new();
-
-    public CourseService(ILogger<CourseService> logger, TmsDbContext context)
-    {
-        _logger = logger;
-        _context = context;
-    }
+    private readonly List<CourseDto> courses = new();
 
     public async Task<CourseResponseDto?> GetByIdAsync(int id, CancellationToken ct)
     {
-        var course = await _context.Courses
+        var course = await context.Courses
         .AsNoTracking()
         .Where(c => c.Id == id)
         .Select(c => new CourseResponseDto(
@@ -34,15 +25,18 @@ public class CourseService : ICourseService
         .FirstOrDefaultAsync(ct);
         if (course is null)
         {
-            _logger.LogWarning("Course {CourseId} not found", id);
+            logger.LogWarning("Course {CourseId} not found", id);
             return null;
         }
-        _logger.LogInformation("Found course {CourseId}", id);
+        logger.LogInformation("Found course {CourseId}", id);
         return course;
         
         throw new NotImplementedException();
 
     }
+
+    public Task<bool> CodeExistsAsync(string code, CancellationToken ct) =>
+        context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
 
     public async Task<CourseResponseDto> CreateAsync(CreateCourseRequest request, CancellationToken ct)
     {
@@ -52,16 +46,16 @@ public class CourseService : ICourseService
         Title = request.Title,
         MaxCapacity = request.MaxCapacity
         };
-        _context.Courses.Add(course);
-        await _context.SaveChangesAsync(ct);
-        _logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
+        context.Courses.Add(course);
+        await context.SaveChangesAsync(ct);
+        logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
         return (await GetByIdAsync(course.Id, ct))!;
     }
 
 
     public async Task<IReadOnlyList<CourseDto>> GetAllAsync()
     {
-        var courses = await _context.Courses.AsNoTracking().Select(c => new CourseDto(c.Id, c.Code, c.Title, c.MaxCapacity)).ToListAsync();
+        var courses = await context.Courses.AsNoTracking().Select(c => new CourseDto(c.Id, c.Code, c.Title, c.MaxCapacity)).ToListAsync();
         return courses;
     }
 
@@ -69,13 +63,13 @@ public class CourseService : ICourseService
         CancellationToken ct = default
     )
     {
-        var top = await _context
+        var top = await context
             .Enrollments.GroupBy(e => e.CourseId)
             .Select(g => new { CourseId = g.Key, Count = g.Count() })
             .OrderByDescending(x => x.Count)
             .Take(5)
             .Join(
-                _context.Courses,
+                context.Courses,
                 g => g.CourseId,
                 c => c.Id,
                 (g, c) => new TopCourseDto(c.Title, g.Count)

@@ -9,4 +9,5 @@ public interface ICourseService
     Task<CourseResponseDto> CreateAsync(CreateCourseRequest request, CancellationToken ct);
     Task<IReadOnlyList<CourseDto>> GetAllAsync();
     Task<IReadOnlyList<TopCourseDto>> GetTopCoursesAsync(CancellationToken ct = default);
+    Task<bool> CodeExistsAsync(string code, CancellationToken ct);
 }

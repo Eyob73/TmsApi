@@ -1,3 +1,5 @@
+using Tms.Api.Services;
+
 public class EnrollmentWorker(IServiceScopeFactory scopeFactory)
 {
     private readonly IServiceScopeFactory _scopeFactory;

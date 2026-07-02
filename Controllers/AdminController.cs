@@ -14,7 +14,10 @@ public class AdminController(IAdminService adminService) : ControllerBase
     }
 
     [HttpPost("enrollments/archive")]
-    public async Task<IActionResult> ArchiveOldEnrollments([FromQuery] DateTime cutoff, CancellationToken cancellationToken)
+    public async Task<IActionResult> ArchiveOldEnrollments(
+        [FromQuery] DateTime cutoff,
+        CancellationToken cancellationToken
+    )
     {
         var count = await adminService.ArchiveOldEnrollmentsAsync(cutoff, cancellationToken);
         return Ok(new { ArchivedCount = count });

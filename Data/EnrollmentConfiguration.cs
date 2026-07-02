@@ -16,15 +16,17 @@ public class EnrollmentConfiguration : IEntityTypeConfiguration<Enrollment>
         builder.Property(e => e.StudentId).IsRequired();
         builder.Property(e => e.CourseId).IsRequired();
 
-        builder.HasOne(e => e.Student)
-               .WithMany(s => s.Enrollments)
-               .HasForeignKey(e => e.StudentId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(e => e.Student)
+            .WithMany(s => s.Enrollments)
+            .HasForeignKey(e => e.StudentId)
+            .OnDelete(DeleteBehavior.Restrict);
 
-        builder.HasOne(e => e.Course)
-               .WithMany(c => c.Enrollments)
-               .HasForeignKey(e => e.CourseId)
-               .OnDelete(DeleteBehavior.Restrict);
+        builder
+            .HasOne(e => e.Course)
+            .WithMany(c => c.Enrollments)
+            .HasForeignKey(e => e.CourseId)
+            .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasIndex(e => e.CourseId);
         builder.HasIndex(e => e.StudentId);

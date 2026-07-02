@@ -49,7 +49,8 @@ public class StudentService : IStudentService
     public async Task<IReadOnlyList<StudentDto>> GetAllAsync()
     {
         return await _context
-            .Students.Select(s => new StudentDto(
+            .Students.OrderBy(s => s.Id)
+            .Select(s => new StudentDto(
                 s.Id,
                 s.RegistrationNumber,
                 s.Name,

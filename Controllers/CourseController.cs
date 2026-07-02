@@ -1,4 +1,7 @@
 using Microsoft.AspNetCore.Mvc;
+using Tms.Api.Services;
+using TmsApi.Entities;
+using Tms.Api.Dtos;
 
 [ApiController]
 [Route("api/courses")]
@@ -18,11 +21,17 @@ public class CoursesController(ICourseService CourseService) : ControllerBase
         return Ok(topCourses);
     }
 
-    [HttpGet("{id}")]
-    public async Task<IActionResult> GetById(string id)
+    [HttpGet("{id:int}", Name = nameof(GetCourseById))]
+    public async Task<IActionResult> GetCourseById(int id, CancellationToken ct)
     {
-        var course = await CourseService.GetByIdAsync(id);
-
+        var course = await CourseService.GetByIdAsync(id, ct);
         return course is not null ? Ok(course) : NotFound();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> CreateCourse(CreateCourseRequest request, CancellationToken ct)
+    {
+        var result = await CourseService.CreateAsync(request, ct);
+        return CreatedAtAction(nameof(GetCourseById), new { id = result.Id }, result);
     }
 }

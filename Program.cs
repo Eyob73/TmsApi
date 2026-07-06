@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
+using Tms.Api.Filters;
+using Tms.Api.Persistence;
 using Tms.Api.Services;
 using TmsApi;
 using TmsApi.Data;
@@ -20,6 +22,10 @@ builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddControllers(options =>
+{
+    options.Filters.Add<AuditLogFilter>();
+});
 
 builder.Services.AddProblemDetails();
 
@@ -241,6 +247,13 @@ using (var scope = app.Services.CreateScope())
     }
     else
         app.Logger.LogInformation("Found {Count} Students", students.Count);
+}
+
+if (app.Environment.IsDevelopment())
+{
+    using var scope = app.Services.CreateScope();
+    var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
+    await DataSeeder.SeedAsync(context);
 }
 
 app.Run();

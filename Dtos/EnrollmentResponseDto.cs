@@ -1,6 +1,3 @@
 namespace Tms.Api.Dtos;
-public record EnrollmentResponseDto(
-int Id,
-int CourseId,
-int StudentId,
-DateTime EnrolledAt);
+
+public record EnrollmentResponseDto(int Id, int CourseId, int StudentId, DateTime EnrolledAt);

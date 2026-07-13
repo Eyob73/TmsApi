@@ -68,6 +68,16 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         }
         return Task.FromResult(removed);
     }
+
+    public async Task<EnrollmentResponseDto?> GetByCourseAsync(
+        int courseId,
+        CancellationToken ct
+    ) =>
+        await context
+            .Enrollments.AsNoTracking()
+            .Where(e => e.CourseId == courseId)
+            .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.EnrolledAt))
+            .FirstOrDefaultAsync(ct);
 }
 
 public record EnrollmentRecord(string Id, string StudentId, string CourseCode, DateTime EnrolledAt);

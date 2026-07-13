@@ -1,0 +1,3 @@
+namespace Tms.Api.Dtos;
+
+public record LinkDto(string Href, string Rel, string Method);

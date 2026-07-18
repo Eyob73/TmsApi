@@ -1,1 +1,30 @@
 *.global.json
+# Build outputs
+bin/
+obj/
+out/
+
+# Visual Studio / VS Code
+.vs/
+.vscode/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# NuGet packages
+*.nupkg
+*.snupkg
+packages/
+
+# Logs
+*.log
+
+# Environment-specific configuration
+appsettings.Development.json
+# appsettings.Local.json
+# appsettings.*.json
+
+# OS-specific files
+.DS_Store
+Thumbs.db

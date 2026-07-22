@@ -1,12 +1,20 @@
+using Asp.Versioning;
+using MediatR;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.DependencyInjection;
 using Scalar.AspNetCore;
 using TmsApi.Api;
 using TmsApi.Api.Controllers;
+using TmsApi.Api.ExceptionHandlers;
 using TmsApi.Api.Filters;
+using TmsApi.Api.Middlewares;
+using TmsApi.Application.Behaviors;
+using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Interfaces;
 using TmsApi.Domain.Entities;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Persistence.Configurations;
+using TmsApi.Infrastructure.Persistence.Repositories;
 using TmsApi.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -18,16 +26,50 @@ builder.Services.AddDbContext<TmsDbContext>(options =>
         .EnableSensitiveDataLogging()
 );
 
+builder
+    .Services.AddApiVersioning(options =>
+    {
+        options.DefaultApiVersion = new ApiVersion(1, 0);
+        options.AssumeDefaultVersionWhenUnspecified = true;
+        options.ReportApiVersions = true;
+        options.ApiVersionReader = ApiVersionReader.Combine(
+            new UrlSegmentApiVersionReader(),
+            new HeaderApiVersionReader("X-Api-Version")
+        );
+    })
+    .AddApiExplorer(options =>
+    {
+        options.GroupNameFormat = "'v'VVV";
+        options.SubstituteApiVersionInUrl = true;
+    });
+
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
 builder.Services.AddScoped<ICourseService, CourseService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+
+builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
+builder.Services.AddScoped<ICourseRepository, CourseRepository>();
+
 builder.Services.AddControllers(options =>
 {
     options.Filters.Add<AuditLogFilter>();
 });
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly)
+);
+
+builder.Services.AddMediatR(cfg =>
+    cfg.RegisterServicesFromAssembly(typeof(EnrollStudentHandler).Assembly)
+);
+
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
+builder.Services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
 
 builder.Services.AddProblemDetails();
 
@@ -73,6 +115,8 @@ app.UseRouting();
 app.UseAuthentication();
 
 app.UseAuthorization();
+
+app.UseMiddleware<V1DeprecationMiddleware>();
 
 app.MapControllers();
 

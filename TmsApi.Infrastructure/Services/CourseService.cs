@@ -12,7 +12,11 @@ using TmsApi.Infrastructure.Persistence;
 
 namespace TmsApi.Infrastructure.Services;
 
-public class CourseService(TmsDbContext context, ILogger<CourseService> logger) : ICourseService
+public class CourseService(
+    TmsDbContext context,
+    ILogger<CourseService> logger,
+    ICachedCourseService cachedService
+) : ICourseService
 {
     private readonly List<CourseDto> courses = new();
 
@@ -36,8 +40,6 @@ public class CourseService(TmsDbContext context, ILogger<CourseService> logger) 
         }
         logger.LogInformation("Found course {CourseId}", id);
         return course;
-
-        throw new NotImplementedException();
     }
 
     public async Task<PagedResponse<CourseResponseDto>> GetCoursesAsync(
@@ -104,6 +106,7 @@ public class CourseService(TmsDbContext context, ILogger<CourseService> logger) 
         context.Courses.Add(course);
         await context.SaveChangesAsync(ct);
         logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
+        await cachedService.InvalidateCourseCacheAsync(ct);
         return (await GetByIdAsync(course.Id, ct))!;
     }
 

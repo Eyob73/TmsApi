@@ -1,16 +1,27 @@
 using Asp.Versioning;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using TmsApi.Application.Interfaces;
+using TmsApi.Infrastructure.Caching;
 using TmsApi.Infrastructure.Persistence;
+using TmsApi.Infrastructure.Services;
 
 namespace TmsApi.Api.Controllers.V2;
 
 [ApiController]
 [Route("api/v{version:apiVersion}/courses")]
 [ApiVersion("2.0")]
-public class CoursesController(TmsDbContext context) : ControllerBase
+public class CoursesController(TmsDbContext context, ICachedCourseService cacheService)
+    : ControllerBase
 {
     [HttpGet]
+    public async Task<IActionResult> GetCourses(CancellationToken ct = default)
+    {
+        var courses = await cacheService.GetAllCoursesAsync(ct);
+        return Ok(courses);
+    }
+
+    [HttpGet("paged")]
     public async Task<IActionResult> GetCourses(
         [FromQuery] int page = 1,
         [FromQuery] int pageSize = 20,
@@ -63,5 +74,20 @@ public class CoursesController(TmsDbContext context) : ControllerBase
                 },
             }
         );
+    }
+
+    [HttpGet("{code}")]
+    public async Task<IActionResult> GetCourseById(
+        [FromRoute] string code,
+        CancellationToken ct = default
+    )
+    {
+        var course = await cacheService.GetCourseAsync(code, ct);
+        if (course == null)
+        {
+            return NotFound();
+        }
+
+        return Ok(course);
     }
 }

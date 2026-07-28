@@ -9,3 +9,17 @@ public record CourseDetailDto
     public required int EnrollmentCount { get; init; }
     public required IReadOnlyList<LinkDto> Links { get; init; }
 }
+
+public record CourseDto(int Id, string Code, string Title, int MaxCapacity, int EnrollmentCount);
+
+public static class CourseDtoFields
+{
+    public static readonly HashSet<string> Allowed = new(StringComparer.OrdinalIgnoreCase)
+    {
+        nameof(CourseDto.Id),
+        nameof(CourseDto.Code),
+        nameof(CourseDto.Title),
+        nameof(CourseDto.MaxCapacity),
+        nameof(CourseDto.EnrollmentCount),
+    };
+}

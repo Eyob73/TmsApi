@@ -1,3 +1,4 @@
+using System.Threading.Channels;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
 using MediatR;
@@ -6,21 +7,29 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
+using Polly;
+using Polly.CircuitBreaker;
+using Polly.Retry;
+using Polly.Timeout;
 using Scalar.AspNetCore;
 using TmsApi.Api;
 using TmsApi.Api.Controllers;
 using TmsApi.Api.ExceptionHandlers;
 using TmsApi.Api.Filters;
+using TmsApi.Api.Hubs;
 using TmsApi.Api.Middlewares;
 using TmsApi.Api.RateLimiting;
 using TmsApi.Application.Behaviors;
 using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Interfaces;
+using TmsApi.Application.Transcripts;
 using TmsApi.Domain.Entities;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Persistence.Configurations;
 using TmsApi.Infrastructure.Persistence.Repositories;
 using TmsApi.Infrastructure.Services;
+using TmsApi.Infrastructure.Transcripts;
+using TmsApi.Infrastructure.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -130,6 +139,67 @@ builder
         options.SubstituteApiVersionInUrl = true;
     });
 
+builder.Services.AddSingleton(
+    Channel.CreateBounded<TranscriptRequest>(
+        new BoundedChannelOptions(100) { FullMode = BoundedChannelFullMode.Wait }
+    )
+);
+
+builder.Services.AddResiliencePipeline(
+    "certificate-api",
+    pipeline =>
+    {
+        pipeline
+            // Outer: per-request hard timeout  protects against hangs
+            .AddTimeout(TimeSpan.FromSeconds(5))
+            // Middle: circuit breaker  protects against sustained outage
+            .AddCircuitBreaker(
+                new CircuitBreakerStrategyOptions
+                {
+                    FailureRatio = 0.5,
+                    MinimumThroughput = 10,
+                    SamplingDuration = TimeSpan.FromSeconds(30),
+                    BreakDuration = TimeSpan.FromSeconds(15),
+                    ShouldHandle = new PredicateBuilder()
+                        .Handle<HttpRequestException>()
+                        .Handle<TimeoutRejectedException>(),
+                    OnOpened = args =>
+                    {
+                        Console.WriteLine(
+                            "Circuit OPENED  stopping requests to certificate service"
+                        );
+                        return ValueTask.CompletedTask;
+                    },
+                    OnClosed = args =>
+                    {
+                        Console.WriteLine("Circuit CLOSED  certificate service recovered");
+                        return ValueTask.CompletedTask;
+                    },
+                }
+            )
+            // Inner: retry with jitter  only for transient failures
+            .AddRetry(
+                new RetryStrategyOptions
+                {
+                    MaxRetryAttempts = 3,
+                    Delay = TimeSpan.FromMilliseconds(500),
+                    BackoffType = DelayBackoffType.Exponential,
+                    UseJitter = true,
+                    ShouldHandle = new PredicateBuilder()
+                        .Handle<HttpRequestException>()
+                        .Handle<TimeoutRejectedException>(),
+                    OnRetry = args =>
+                    {
+                        Console.WriteLine(
+                            $"Retry #{args.AttemptNumber} after {args.RetryDelay.TotalMilliseconds:F0}ms ({args.Outcome.Exception?.GetType().Name})"
+                        );
+                        return ValueTask.CompletedTask;
+                    },
+                }
+            );
+    }
+);
+
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -140,6 +210,16 @@ builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ICachedCourseService, CachedCourseService>();
+
+builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
+
+builder.Services.AddHostedService<TranscriptWorker>();
+
+builder.Services.AddSignalR();
+
+// builder.Services.AddSignalR().AddStackExchangeRedis(
+//     builder.Configuration.GetConnectionString("Redis")!,
+//     options => options.Configuration.ChannelPrefix = "tms-signalr");
 
 builder.Services.AddControllers(options =>
 {
@@ -179,7 +259,34 @@ builder.Services.AddHybridCache(options =>
 builder.Services.AddProblemDetails();
 builder.Services.AddHealthChecks();
 
-builder.Services.AddOpenApi();
+builder.Services.AddOpenApi(
+    "v1",
+    options =>
+    {
+        options.AddDocumentTransformer(
+            (document, context, cancellationToken) =>
+            {
+                document.Info.Title = "TMS API v1";
+                document.Info.Version = "v1";
+                return Task.CompletedTask;
+            }
+        );
+    }
+);
+builder.Services.AddOpenApi(
+    "v2",
+    options =>
+    {
+        options.AddDocumentTransformer(
+            (document, context, cancellationToken) =>
+            {
+                document.Info.Title = "TMS API v2";
+                document.Info.Version = "v2";
+                return Task.CompletedTask;
+            }
+        );
+    }
+);
 
 builder.Host.UseDefaultServiceProvider(options =>
 {
@@ -199,6 +306,8 @@ builder
 
 var app = builder.Build();
 
+app.MapHub<TmsHub>("/hubs/tms");
+
 app.UseMiddleware<RequestLoggingMiddleware>();
 
 if (!app.Environment.IsDevelopment())
@@ -209,7 +318,11 @@ if (!app.Environment.IsDevelopment())
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
-    app.MapScalarApiReference();
+    app.MapScalarApiReference(options =>
+    {
+        options.WithTitle("TMS API");
+        options.WithOpenApiRoutePattern("/openapi/{documentName}.json");
+    });
 }
 
 app.UseStatusCodePages();
@@ -413,5 +526,34 @@ if (app.Environment.IsDevelopment())
     var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
     await DataSeeder.SeedAsync(context);
 }
+
+// --- Lab-only fake certificate service ---
+var attempts = 0;
+app.MapPost(
+        "/fake/certificates",
+        async () =>
+        {
+            var n = Interlocked.Increment(ref attempts);
+
+            if (n % 7 == 0)
+            {
+                // Hang  simulates a downstream that accepted the request and never responded.
+                await Task.Delay(TimeSpan.FromSeconds(20));
+                return Results.Ok(new { Status = "issued", Attempt = n });
+            }
+            if (n % 3 != 0)
+            {
+                // Transient: 503 Service Unavailable
+                return Results.StatusCode(StatusCodes.Status503ServiceUnavailable);
+            }
+            if (n % 11 == 0)
+            {
+                // Non-transient: 400  Polly must NOT retry this
+                return Results.BadRequest(new { error = "validation_failed" });
+            }
+            return Results.Ok(new { Status = "issued", Attempt = n });
+        }
+    )
+    .WithTags("lab-fixtures");
 
 app.Run();

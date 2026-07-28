@@ -1,6 +1,7 @@
 using FluentValidation;
 using Microsoft.AspNetCore.Diagnostics;
 using Microsoft.AspNetCore.Mvc;
+using TmsApi.Application.Common;
 
 namespace TmsApi.Api.ExceptionHandlers;
 
@@ -22,6 +23,12 @@ public class GlobalExceptionHandler(ILogger<GlobalExceptionHandler> logger) : IE
                     ve
                         .Errors.GroupBy(e => e.PropertyName)
                         .ToDictionary(g => g.Key, g => g.Select(e => e.ErrorMessage).ToArray())
+            ),
+            BadRequestException bre => (
+                StatusCodes.Status400BadRequest,
+                "Bad request",
+                bre.Message,
+                null
             ),
             _ => (
                 StatusCodes.Status500InternalServerError,

@@ -1,3 +1,5 @@
+using System.Text.Json.Serialization;
+
 namespace TmsApi.Application.DTOs;
 
 public record StudentDto(
@@ -7,4 +9,8 @@ public record StudentDto(
     decimal GPA,
     bool IsActive,
     DateTime LastUpdated
-);
+)
+{
+    [JsonIgnore]
+    public string? InternalNotes { get; init; }
+}

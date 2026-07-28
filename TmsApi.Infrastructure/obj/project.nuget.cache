@@ -1,6 +1,6 @@
 {
   "version": 2,
-  "dgSpecHash": "LUwlHg9QW9k=",
+  "dgSpecHash": "hByq8UR0Mxw=",
   "success": true,
   "projectFilePath": "C:\\Users\\sata\\Desktop\\AAU\\M5\\TmsApi\\TmsApi.Infrastructure\\TmsApi.Infrastructure.csproj",
   "expectedPackageFiles": [
@@ -26,6 +26,9 @@
     "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.dependencyinjection\\10.0.10\\microsoft.extensions.dependencyinjection.10.0.10.nupkg.sha512",
     "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.dependencyinjection.abstractions\\10.0.10\\microsoft.extensions.dependencyinjection.abstractions.10.0.10.nupkg.sha512",
     "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.dependencymodel\\10.0.10\\microsoft.extensions.dependencymodel.10.0.10.nupkg.sha512",
+    "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.diagnostics.abstractions\\10.0.0\\microsoft.extensions.diagnostics.abstractions.10.0.0.nupkg.sha512",
+    "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.fileproviders.abstractions\\10.0.0\\microsoft.extensions.fileproviders.abstractions.10.0.0.nupkg.sha512",
+    "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.hosting.abstractions\\10.0.0\\microsoft.extensions.hosting.abstractions.10.0.0.nupkg.sha512",
     "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.logging\\10.0.10\\microsoft.extensions.logging.10.0.10.nupkg.sha512",
     "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.logging.abstractions\\10.0.10\\microsoft.extensions.logging.abstractions.10.0.10.nupkg.sha512",
     "C:\\Users\\sata\\.nuget\\packages\\microsoft.extensions.options\\10.0.10\\microsoft.extensions.options.10.0.10.nupkg.sha512",

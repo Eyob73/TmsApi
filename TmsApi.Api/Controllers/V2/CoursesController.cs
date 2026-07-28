@@ -1,7 +1,10 @@
 using Asp.Versioning;
+using MediatR;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
+using TmsApi.Application.Courses.Queries;
+using TmsApi.Application.DTOs;
 using TmsApi.Application.Interfaces;
+using TmsApi.Application.Utilities;
 using TmsApi.Infrastructure.Caching;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Services;
@@ -11,83 +14,83 @@ namespace TmsApi.Api.Controllers.V2;
 [ApiController]
 [Route("api/v{version:apiVersion}/courses")]
 [ApiVersion("2.0")]
-public class CoursesController(TmsDbContext context, ICachedCourseService cacheService)
-    : ControllerBase
+public class CoursesController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
-    public async Task<IActionResult> GetCourses(CancellationToken ct = default)
-    {
-        var courses = await cacheService.GetAllCoursesAsync(ct);
-        return Ok(courses);
-    }
-
-    [HttpGet("paged")]
     public async Task<IActionResult> GetCourses(
-        [FromQuery] int page = 1,
-        [FromQuery] int pageSize = 20,
-        CancellationToken ct = default
+        [FromQuery] string? fields,
+        [FromQuery] PagedRequest paging,
+        CancellationToken ct
     )
     {
-        page = Math.Max(1, page);
-        pageSize = Math.Clamp(pageSize, 1, 50);
-        var baseQuery = context.Courses.AsNoTracking();
-        var totalCount = await baseQuery.CountAsync(ct);
-        var rows = await baseQuery
-            .OrderBy(c => c.Title)
-            .Skip((page - 1) * pageSize)
-            .Take(pageSize)
-            .Select(c => new
-            {
-                c.Id,
-                c.Title,
-                c.Code,
-                c.MaxCapacity,
-                EnrollmentCount = c.Enrollments.Count,
-            })
-            .ToListAsync(ct);
-        var totalPages = (int)Math.Ceiling(totalCount / (double)pageSize);
-        var hasNext = page < totalPages;
-        var hasPrevious = page > 1;
+        var courses = await mediator.Send(new GetCoursesQuery(paging), ct);
+
+        var shaped = courses.Items.ShapeData(fields, CourseDtoFields.Allowed);
+
+        var links = new List<LinkDto>
+        {
+            new(
+                Url.Action(nameof(GetCourses), new { page = courses.Page, fields })!,
+                "self",
+                "GET"
+            ),
+        };
+        if (courses.HasNext)
+            links.Add(
+                new(
+                    Url.Action(nameof(GetCourses), new { page = courses.Page + 1, fields })!,
+                    "next",
+                    "GET"
+                )
+            );
+        if (courses.HasPrevious)
+            links.Add(
+                new(
+                    Url.Action(nameof(GetCourses), new { page = courses.Page - 1, fields })!,
+                    "prev",
+                    "GET"
+                )
+            );
+
         return Ok(
             new
             {
-                data = rows,
-                meta = new
+                Data = shaped,
+                Meta = new
                 {
-                    totalCount,
-                    page,
-                    pageSize,
-                    totalPages,
-                    hasNext,
-                    hasPrevious,
+                    courses.TotalCount,
+                    courses.Page,
+                    courses.PageSize,
+                    courses.TotalPages,
+                    courses.HasNext,
+                    courses.HasPrevious,
                 },
-                links = new
-                {
-                    self = $"/api/v2/courses?page={page}&pageSize={pageSize}",
-                    next = hasNext
-                        ? $"/api/v2/courses?page={page + 1}&pageSize={pageSize}"
-                        : (string?)null,
-                    prev = hasPrevious
-                        ? $"/api/v2/courses?page={page - 1}&pageSize={pageSize}"
-                        : (string?)null,
-                    enroll = "/api/v2/enrollments",
-                },
+                Links = links,
             }
         );
     }
 
     [HttpGet("{code}")]
-    public async Task<IActionResult> GetCourseById(
-        [FromRoute] string code,
-        CancellationToken ct = default
-    )
+    public async Task<IActionResult> GetCourse(string code, CancellationToken ct)
     {
-        var course = await cacheService.GetCourseAsync(code, ct);
-        if (course == null)
-        {
+        var course = await mediator.Send(new GetCourseQuery(code), ct);
+        if (course is null)
             return NotFound();
-        }
 
-        return Ok(course);
+        return Ok(
+            new
+            {
+                Data = course,
+                Links = new[]
+                {
+                    new LinkDto(Url.Action(nameof(GetCourse), new { code })!, "self", "GET"),
+                    new LinkDto(
+                        Url.Action("Enroll", "Enrollments", new { courseCode = code })!,
+                        "enroll",
+                        "POST"
+                    ),
+                },
+            }
+        );
     }
 }

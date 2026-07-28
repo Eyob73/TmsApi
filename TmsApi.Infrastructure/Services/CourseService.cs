@@ -42,6 +42,21 @@ public class CourseService(
         return course;
     }
 
+    public Task<CourseResponseDto?> GetByCodeAsync(string code, CancellationToken cancellationToken)
+    {
+        return context
+            .Courses.AsNoTracking()
+            .Where(c => c.Code == code)
+            .Select(c => new CourseResponseDto(
+                c.Id,
+                c.Code,
+                c.Title,
+                c.MaxCapacity,
+                c.Enrollments.Count
+            ))
+            .FirstOrDefaultAsync(cancellationToken);
+    }
+
     public async Task<PagedResponse<CourseResponseDto>> GetCoursesAsync(
         PagedRequest request,
         CancellationToken ct

@@ -1,12 +1,18 @@
 using System.Threading.Channels;
 using System.Threading.RateLimiting;
 using Asp.Versioning;
+using HealthChecks.NpgSql;
 using MediatR;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Caching.Hybrid;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
+using OpenTelemetry.Metrics;
+using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 using Polly;
 using Polly.CircuitBreaker;
 using Polly.Retry;
@@ -24,6 +30,7 @@ using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Interfaces;
 using TmsApi.Application.Transcripts;
 using TmsApi.Domain.Entities;
+using TmsApi.Infrastructure.ExternalServices;
 using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Persistence.Configurations;
 using TmsApi.Infrastructure.Persistence.Repositories;
@@ -32,6 +39,25 @@ using TmsApi.Infrastructure.Transcripts;
 using TmsApi.Infrastructure.Workers;
 
 var builder = WebApplication.CreateBuilder(args);
+
+const string ServiceName = "tms-api";
+
+builder
+    .Services.AddOpenTelemetry()
+    .ConfigureResource(r => r.AddService(serviceName: ServiceName, serviceVersion: "1.0.0"))
+    .WithTracing(t =>
+        t.AddSource(ServiceName)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddOtlpExporter()
+    )
+    .WithMetrics(m =>
+        m.AddMeter(ServiceName)
+            .AddAspNetCoreInstrumentation()
+            .AddHttpClientInstrumentation()
+            .AddRuntimeInstrumentation()
+            .AddOtlpExporter()
+    );
 
 builder.Services.AddRateLimiter(options =>
 {
@@ -200,6 +226,44 @@ builder.Services.AddResiliencePipeline(
     }
 );
 
+builder.Services.AddHttpClient<ICertificateService, CertificateService>(
+    (sp, client) =>
+    {
+        var baseUrl =
+            sp.GetRequiredService<IConfiguration>().GetValue<string>("TmsApi:PublicBaseUrl")
+            ?? "http://localhost:5001";
+        client.BaseAddress = new Uri(baseUrl);
+    }
+);
+
+builder
+    .Services.AddHttpClient(
+        "SmsService",
+        client =>
+        {
+            client.BaseAddress = new Uri("https://sms.tms.internal");
+        }
+    )
+    .AddStandardResilienceHandler();
+
+builder
+    .Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy("alive"), tags: ["live"])
+    .AddNpgSql(
+        connectionString: builder.Configuration.GetConnectionString("TmsDatabase")!,
+        name: "postgres",
+        tags: ["ready"]
+    )
+    // Optional: a Redis check, only if you wired Redis in Ex 3 or Ex 6.
+    // .AddRedis(builder.Configuration.GetConnectionString("Redis")!, tags: ["ready"])
+;
+
+builder.Logging.AddJsonConsole(options =>
+{
+    options.IncludeScopes = true;
+    options.JsonWriterOptions = new() { Indented = false };
+});
+
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -332,10 +396,6 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseRateLimiter();
-
-app.MapHealthChecks("/health/live").DisableRateLimiting();
-
-app.MapHealthChecks("/health/ready").DisableRateLimiting();
 
 app.UseAuthentication();
 
@@ -555,5 +615,17 @@ app.MapPost(
         }
     )
     .WithTags("lab-fixtures");
+
+app.MapHealthChecks(
+        "/health/live",
+        new HealthCheckOptions { Predicate = check => check.Tags.Contains("live") }
+    )
+    .DisableRateLimiting();
+
+app.MapHealthChecks(
+        "/health/ready",
+        new HealthCheckOptions { Predicate = check => check.Tags.Contains("ready") }
+    )
+    .DisableRateLimiting();
 
 app.Run();

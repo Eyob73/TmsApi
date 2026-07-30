@@ -8,6 +8,9 @@
       "applicationUrl": "http://localhost:5001",
       "environmentVariables": {
         "ASPNETCORE_ENVIRONMENT": "development"
+      },
+      "TmsApi": {
+        "PublicBaseUrl": "http://localhost:5001"
       }
     },
     "https": {

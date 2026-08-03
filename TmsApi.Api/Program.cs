@@ -264,6 +264,14 @@ builder.Logging.AddJsonConsole(options =>
     options.JsonWriterOptions = new() { Indented = false };
 });
 
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "AllowAngular",
+        policy => policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()
+    );
+});
+
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -388,6 +396,8 @@ if (app.Environment.IsDevelopment())
         options.WithOpenApiRoutePattern("/openapi/{documentName}.json");
     });
 }
+
+app.UseCors("AllowAngular");
 
 app.UseStatusCodePages();
 

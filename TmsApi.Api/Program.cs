@@ -5,6 +5,7 @@ using HealthChecks.NpgSql;
 using MediatR;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
@@ -395,6 +396,22 @@ builder.Services.AddAntiforgery(options =>
     options.HeaderName = "X-XSRF-TOKEN";
 });
 
+builder
+    .Services.AddIdentityCore<TmsUser>(options =>
+    {
+        // Enterprise Password Policy
+        options.Password.RequiredLength = 12;
+        options.Password.RequireUppercase = true;
+        options.Password.RequireDigit = true;
+        options.Password.RequireNonAlphanumeric = true;
+        // Brute-Force Lockout Protection
+        options.Lockout.MaxFailedAccessAttempts = 5;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(15);
+        options.Lockout.AllowedForNewUsers = true;
+    })
+    .AddRoles<IdentityRole>()
+    .AddEntityFrameworkStores<TmsDbContext>();
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -684,4 +701,16 @@ app.MapHealthChecks(
     )
     .DisableRateLimiting();
 
+// using (var scope = app.Services.CreateScope())
+// {
+//     var service = new CryptoDemoService();
+//     string hash1 = service.HashUserPassword("Password123!");
+//     string hash2 = service.HashUserPassword("Password123!");
+//     // hash1 and hash2 are completely different strings because of unique random salts!
+//     Console.WriteLine($"Hash 1: {hash1}");
+//     Console.WriteLine($"Hash 2: {hash2}");
+//     // Both verify to true against the same plain text:
+//     bool match1 = service.VerifyUserPassword("Password123!", hash1); // true
+//     bool match2 = service.VerifyUserPassword("Password123!", hash2); // true
+// }
 app.Run();

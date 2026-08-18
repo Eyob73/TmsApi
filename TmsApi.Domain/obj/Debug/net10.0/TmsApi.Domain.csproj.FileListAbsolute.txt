@@ -10,3 +10,4 @@ C:\Users\sata\Desktop\AAU\M5\TmsApi\TmsApi.Domain\obj\Debug\net10.0\TmsApi.Domai
 C:\Users\sata\Desktop\AAU\M5\TmsApi\TmsApi.Domain\obj\Debug\net10.0\refint\TmsApi.Domain.dll
 C:\Users\sata\Desktop\AAU\M5\TmsApi\TmsApi.Domain\obj\Debug\net10.0\TmsApi.Domain.pdb
 C:\Users\sata\Desktop\AAU\M5\TmsApi\TmsApi.Domain\obj\Debug\net10.0\ref\TmsApi.Domain.dll
+C:\Users\sata\Desktop\AAU\M5\TmsApi\TmsApi.Domain\obj\Debug\net10.0\TmsApi.Domain.csproj.AssemblyReference.cache

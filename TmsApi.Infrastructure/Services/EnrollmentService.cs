@@ -46,14 +46,14 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         context
             .Enrollments.AsNoTracking()
             .Where(e => e.Id == id && e.CourseId == courseId)
-            .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.EnrolledAt))
+            .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.IsArchived, e.EnrolledAt))
             .FirstOrDefaultAsync(ct);
 
     public async Task<IReadOnlyList<EnrollmentResponseDto>> GetAllAsync(int id) =>
         await context
             .Enrollments.AsNoTracking()
             .Where(e => e.CourseId == id)
-            .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.EnrolledAt))
+            .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.IsArchived, e.EnrolledAt))
             .ToListAsync();
 
     public Task<bool> DeleteAsync(string id)
@@ -77,8 +77,28 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         await context
             .Enrollments.AsNoTracking()
             .Where(e => e.CourseId == courseId)
-            .Select(e => new EnrollmentResponseDto(e.Id, e.CourseId, e.StudentId, e.EnrolledAt))
+            .Select(e => new EnrollmentResponseDto(
+                e.Id,
+                e.CourseId,
+                e.StudentId,
+                e.IsArchived,
+                e.EnrolledAt
+            ))
             .FirstOrDefaultAsync(ct);
+
+    public async Task<IReadOnlyList<EnrollmentResponseDto>> GetAllAsync(CancellationToken ct)
+    {
+        return await context
+            .Enrollments.AsNoTracking()
+            .Select(e => new EnrollmentResponseDto(
+                e.Id,
+                e.CourseId,
+                e.StudentId,
+                e.IsArchived,
+                e.EnrolledAt
+            ))
+            .ToListAsync(ct);
+    }
 }
 
 public record EnrollmentRecord(string Id, string StudentId, string CourseCode, DateTime EnrolledAt);

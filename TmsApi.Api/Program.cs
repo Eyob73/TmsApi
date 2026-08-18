@@ -3,6 +3,7 @@ using System.Threading.RateLimiting;
 using Asp.Versioning;
 using HealthChecks.NpgSql;
 using MediatR;
+using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
@@ -264,14 +265,6 @@ builder.Logging.AddJsonConsole(options =>
     options.JsonWriterOptions = new() { Indented = false };
 });
 
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy(
-        "AllowAngular",
-        policy => policy.WithOrigins("http://localhost:4200").AllowAnyHeader().AllowAnyMethod()
-    );
-});
-
 builder.Services.AddSingleton<EnrollmentWorker>();
 builder.Services.AddScoped<IEnrollmentService, EnrollmentService>();
 builder.Services.AddScoped<IStudentService, StudentService>();
@@ -376,16 +369,83 @@ builder
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+// Load allowed origins from appsettings.Development.json
+var allowedOrigins =
+    builder.Configuration.GetSection("AllowedOrigins").Get<string[]>() ?? ["http://localhost:4200"];
+
+// Register the CORS policy in the Dependency Injection container
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(
+        "TmsClient",
+        policy =>
+        {
+            policy
+                .WithOrigins(allowedOrigins)
+                .AllowAnyHeader()
+                .AllowAnyMethod()
+                .AllowCredentials() // Vital for HttpOnly auth cookies in Session 2
+                .SetPreflightMaxAge(TimeSpan.FromMinutes(10));
+        }
+    );
+});
+
+builder.Services.AddAntiforgery(options =>
+{
+    options.HeaderName = "X-XSRF-TOKEN";
+});
+
 var app = builder.Build();
-
-app.MapHub<TmsHub>("/hubs/tms");
-
-app.UseMiddleware<RequestLoggingMiddleware>();
 
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler();
 }
+
+app.UseStatusCodePages();
+
+app.UseMiddleware<RequestLoggingMiddleware>();
+
+app.UseHttpsRedirection();
+
+app.UseRouting();
+
+app.UseCors("TmsClient");
+
+app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
+
+app.UseRateLimiter();
+
+app.UseAuthentication();
+
+app.UseAuthorization();
+
+app.Use(
+    async (context, next) =>
+    {
+        if (
+            context.User.Identity?.IsAuthenticated == true
+            || context.Request.Cookies.ContainsKey("tms_auth")
+        )
+        {
+            var antiforgery = context.RequestServices.GetRequiredService<IAntiforgery>();
+            var tokens = antiforgery.GetAndStoreTokens(context);
+            context.Response.Cookies.Append(
+                "XSRF-TOKEN",
+                tokens.RequestToken!,
+                new CookieOptions
+                {
+                    HttpOnly = false, // MUST be false so Angular JavaScript can read it!
+                    Secure = !builder.Environment.IsDevelopment(),
+                    SameSite = SameSiteMode.Strict,
+                }
+            );
+        }
+        await next(context);
+    }
+);
+
+app.UseMiddleware<V1DeprecationMiddleware>();
 
 if (app.Environment.IsDevelopment())
 {
@@ -397,21 +457,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.UseCors("AllowAngular");
-
-app.UseStatusCodePages();
-
-app.UseHttpsRedirection();
-
-app.UseRouting();
-
-app.UseRateLimiter();
-
-app.UseAuthentication();
-
-app.UseAuthorization();
-
-app.UseMiddleware<V1DeprecationMiddleware>();
+app.MapHub<TmsHub>("/hubs/tms");
 
 app.MapControllers();
 

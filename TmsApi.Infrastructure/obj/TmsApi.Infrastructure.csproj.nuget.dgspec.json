@@ -933,6 +933,10 @@
             "Polly": {
               "target": "Package",
               "version": "[8.7.0, )"
+            },
+            "System.IdentityModel.Tokens.Jwt": {
+              "target": "Package",
+              "version": "[8.22.0, )"
             }
           },
           "imports": [

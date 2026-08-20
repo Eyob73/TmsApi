@@ -14,6 +14,7 @@ public class TmsDbContext : IdentityDbContext<TmsUser>
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Certificate> Certificates => Set<Certificate>();
     public DbSet<Assessment> Assessments => Set<Assessment>();
+    public DbSet<RefreshToken> RefreshTokens { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

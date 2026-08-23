@@ -6,6 +6,7 @@ using HealthChecks.NpgSql;
 using MediatR;
 using Microsoft.AspNetCore.Antiforgery;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Diagnostics.HealthChecks;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -24,6 +25,7 @@ using Polly.Retry;
 using Polly.Timeout;
 using Scalar.AspNetCore;
 using TmsApi.Api;
+using TmsApi.Api.Authorization;
 using TmsApi.Api.Controllers;
 using TmsApi.Api.ExceptionHandlers;
 using TmsApi.Api.Filters;
@@ -438,6 +440,28 @@ builder
     .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<TmsDbContext>();
 
+builder
+    .Services.AddAuthorizationBuilder()
+    .AddPolicy(
+        "CanEditCourse",
+        policy => policy.Requirements.Add(new CourseInstructorRequirement())
+    );
+
+builder.Services.AddSingleton<IAuthorizationHandler, CourseInstructorHandler>();
+
+builder.Services.AddRateLimiter(options =>
+{
+    options.AddFixedWindowLimiter(
+        "AuthLimiter",
+        opt =>
+        {
+            opt.PermitLimit = 5;
+            opt.Window = TimeSpan.FromMinutes(1);
+            opt.QueueLimit = 0;
+        }
+    );
+});
+
 var app = builder.Build();
 
 if (!app.Environment.IsDevelopment())
@@ -485,6 +509,24 @@ app.Use(
             );
         }
         await next(context);
+    }
+);
+
+app.Use(
+    async (context, next) =>
+    {
+        context.Response.Headers.Append("X-Content-Type-Options", "nosniff");
+        context.Response.Headers.Append("X-Frame-Options", "DENY");
+        context.Response.Headers.Append("Referrer-Policy", "strict-origin-when-cross-origin");
+
+        var csp =
+            context.Request.Path.StartsWithSegments("/scalar")
+            || context.Request.Path.StartsWithSegments("/openapi")
+                ? "default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self';"
+                : "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self';";
+
+        context.Response.Headers.Append("Content-Security-Policy", csp);
+        await next();
     }
 );
 

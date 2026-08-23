@@ -20,6 +20,11 @@ public class CourseService(
 {
     private readonly List<CourseDto> courses = new();
 
+    public async Task<Course?> FindAsync(int id, CancellationToken ct = default)
+    {
+        return await context.Courses.FirstOrDefaultAsync(c => c.Id == id, ct);
+    }
+
     public async Task<CourseResponseDto?> GetByIdAsync(int id, CancellationToken ct)
     {
         var course = await context
@@ -123,6 +128,13 @@ public class CourseService(
         logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
         await cachedService.InvalidateCourseCacheAsync(ct);
         return (await GetByIdAsync(course.Id, ct))!;
+    }
+
+    public async Task UpdateAsync(Course course, CancellationToken ct = default)
+    {
+        context.Courses.Update(course);
+        await context.SaveChangesAsync(ct);
+        await cachedService.InvalidateCourseCacheAsync(ct);
     }
 
     public async Task<IReadOnlyList<CourseResponseDto>> GetAllAsync()

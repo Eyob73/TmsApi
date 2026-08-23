@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using TmsApi.Application.DTOs;
@@ -7,14 +8,29 @@ using TmsApi.Infrastructure.Services;
 
 namespace TmsApi.Api.Controllers;
 
+[Authorize(Roles = "Instructor,Admin")]
 [ApiController]
-[Route("api/courses")]
+[Route("api/[controller]")]
 [Tags("Courses")]
 [Produces("application/json")]
 [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status500InternalServerError)]
-public class CoursesController(ICourseService CourseService, LinkGenerator linkGenerator)
-    : ControllerBase
+public class CoursesController : ControllerBase
 {
+    private readonly IAuthorizationService _authorizationService;
+    private readonly ICourseService CourseService;
+    private readonly LinkGenerator linkGenerator;
+
+    public CoursesController(
+        ICourseService CourseService,
+        LinkGenerator linkGenerator,
+        IAuthorizationService authorizationService
+    )
+    {
+        this.CourseService = CourseService;
+        this.linkGenerator = linkGenerator;
+        _authorizationService = authorizationService;
+    }
+
     [HttpGet("all")]
     public async Task<IActionResult> GetAll()
     {
@@ -120,5 +136,25 @@ public class CoursesController(ICourseService CourseService, LinkGenerator linkG
 
         var result = await CourseService.CreateAsync(request, ct);
         return CreatedAtAction(nameof(GetCourseById), new { id = result.Id }, result);
+    }
+
+    [HttpPut("{id}")]
+    public async Task<IActionResult> UpdateCourse(int id, [FromBody] UpdateCourseDto dto)
+    {
+        var course = await CourseService.FindAsync(id);
+        if (course == null)
+            return NotFound();
+
+        var authResult = await _authorizationService.AuthorizeAsync(User, course, "CanEditCourse");
+        if (!authResult.Succeeded)
+        {
+            return Forbid();
+        }
+
+        course.Title = dto.Title;
+        course.MaxCapacity = dto.MaxCapacity;
+
+        await CourseService.UpdateAsync(course);
+        return NoContent();
     }
 }

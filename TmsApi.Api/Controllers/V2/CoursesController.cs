@@ -2,6 +2,7 @@ using Asp.Versioning;
 using MediatR;
 using Microsoft.AspNetCore.Mvc;
 using TmsApi.Application.Courses.Queries;
+using Microsoft.AspNetCore.Authorization;
 using TmsApi.Application.DTOs;
 using TmsApi.Application.Interfaces;
 using TmsApi.Application.Utilities;
@@ -55,19 +56,25 @@ public class CoursesController(IMediator mediator) : ControllerBase
         return Ok(
             new
             {
-                Data = shaped,
-                Meta = new
-                {
-                    courses.TotalCount,
-                    courses.Page,
-                    courses.PageSize,
-                    courses.TotalPages,
-                    courses.HasNext,
-                    courses.HasPrevious,
-                },
+                Items = shaped,
+                TotalCount = courses.TotalCount,
+                Page = courses.Page,
+                PageSize = courses.PageSize,
+                TotalPages = courses.TotalPages,
+                HasNext = courses.HasNext,
+                HasPrevious = courses.HasPrevious,
                 Links = links,
             }
         );
+    }
+
+    [HttpPost]
+    [AllowAnonymous]
+    public IActionResult CreateCourseV2([FromBody] CreateCourseRequest request)
+    {
+        if (!ModelState.IsValid)
+            return BadRequest(ModelState);
+        return Created(string.Empty, null);
     }
 
     [HttpGet("{code}")]

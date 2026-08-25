@@ -36,7 +36,11 @@ public static class DataSeeder
 
     public static async Task SeedAsync(TmsDbContext context, CancellationToken ct = default)
     {
-        await context.Database.MigrateAsync(ct);
+        var providerName = context.Database.ProviderName ?? string.Empty;
+        if (!providerName.Contains("InMemory", StringComparison.OrdinalIgnoreCase))
+        {
+            await context.Database.MigrateAsync(ct);
+        }
         if (await context.Courses.AnyAsync(ct))
         {
             return;

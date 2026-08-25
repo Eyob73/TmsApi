@@ -68,11 +68,66 @@ public class CourseService(
     )
     {
         IQueryable<Course> query = context.Courses.AsNoTracking();
+
+        var providerName = context.Database.ProviderName ?? string.Empty;
+        if (providerName.Contains("InMemory", StringComparison.OrdinalIgnoreCase))
+        {
+            // In-memory provider can't translate EF.Functions.ILike; perform in-memory filtering
+            var list = query.ToList();
+            if (!string.IsNullOrWhiteSpace(request.Search))
+            {
+                var s = request.Search;
+                list = list
+                    .Where(c =>
+                        c.Title.Contains(s, StringComparison.OrdinalIgnoreCase)
+                        || c.Code.Contains(s, StringComparison.OrdinalIgnoreCase)
+                    )
+                    .ToList();
+            }
+
+            var totalCount = list.Count;
+
+            var ordered = request.OrderBy switch
+            {
+                "Title" => request.Descending
+                    ? list.OrderByDescending(c => c.Title)
+                    : list.OrderBy(c => c.Title),
+                "Code" => request.Descending
+                    ? list.OrderByDescending(c => c.Code)
+                    : list.OrderBy(c => c.Code),
+                "MaxCapacity" => request.Descending
+                    ? list.OrderByDescending(c => c.MaxCapacity)
+                    : list.OrderBy(c => c.MaxCapacity),
+                _ => list.OrderBy(c => c.Title),
+            };
+
+            var items = ordered
+                .Skip((request.Page - 1) * request.PageSize)
+                .Take(request.PageSize)
+                .Select(c => new CourseResponseDto(
+                    c.Id,
+                    c.Code,
+                    c.Title,
+                    c.MaxCapacity,
+                    c.Enrollments.Count
+                ))
+                .ToList();
+
+            return new PagedResponse<CourseResponseDto>
+            {
+                Items = items,
+                TotalCount = totalCount,
+                Page = request.Page,
+                PageSize = request.PageSize,
+            };
+        }
+
+        // Relational provider: use ILike for case-insensitive search
         query = query.Where(c =>
             EF.Functions.ILike(c.Title, $"%{request.Search}%")
             || EF.Functions.ILike(c.Code, $"%{request.Search}%")
         );
-        var totalCount = await query.CountAsync(ct);
+        var totalCountDb = await query.CountAsync(ct);
         query = request.OrderBy switch
         {
             "Title" => request.Descending
@@ -89,7 +144,7 @@ public class CourseService(
 
             _ => query.OrderBy(c => c.Title),
         };
-        var items = await query
+        var itemsDb = await query
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(c => new CourseResponseDto(
@@ -102,8 +157,8 @@ public class CourseService(
             .ToListAsync(ct);
         return new PagedResponse<CourseResponseDto>
         {
-            Items = items,
-            TotalCount = totalCount,
+            Items = itemsDb,
+            TotalCount = totalCountDb,
             Page = request.Page,
             PageSize = request.PageSize,
         };

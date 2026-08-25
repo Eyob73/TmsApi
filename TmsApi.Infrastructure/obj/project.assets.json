@@ -3712,11 +3712,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "C:\\Users\\sata\\Desktop\\AAU\\M5\\TmsApi\\TmsApi.Infrastructure\\TmsApi.Infrastructure.csproj",
+      "projectUniqueName": "c:\\Users\\sata\\Desktop\\AAU\\M5\\TmsApi\\TmsApi.Infrastructure\\TmsApi.Infrastructure.csproj",
       "projectName": "TmsApi.Infrastructure",
-      "projectPath": "C:\\Users\\sata\\Desktop\\AAU\\M5\\TmsApi\\TmsApi.Infrastructure\\TmsApi.Infrastructure.csproj",
+      "projectPath": "c:\\Users\\sata\\Desktop\\AAU\\M5\\TmsApi\\TmsApi.Infrastructure\\TmsApi.Infrastructure.csproj",
       "packagesPath": "C:\\Users\\sata\\.nuget\\packages\\",
-      "outputPath": "C:\\Users\\sata\\Desktop\\AAU\\M5\\TmsApi\\TmsApi.Infrastructure\\obj\\",
+      "outputPath": "c:\\Users\\sata\\Desktop\\AAU\\M5\\TmsApi\\TmsApi.Infrastructure\\obj\\",
       "projectStyle": "PackageReference",
       "fallbackFolders": [
         "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\NuGetPackages"

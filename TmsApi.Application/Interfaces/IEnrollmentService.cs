@@ -15,4 +15,5 @@ public interface IEnrollmentService
     Task<IReadOnlyList<EnrollmentResponseDto>> GetAllAsync(CancellationToken ct);
     Task<bool> DeleteAsync(string id);
     Task<EnrollmentResponseDto?> GetByCourseAsync(int courseId, CancellationToken ct);
+    Task<bool> ExistsAsync(int studentId, string courseCode, CancellationToken ct);
 }

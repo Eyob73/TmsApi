@@ -591,7 +591,11 @@ app.MapGet(
 using (var scope = app.Services.CreateScope())
 {
     var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
-    context.Database.Migrate();
+    var providerName = context.Database.ProviderName ?? string.Empty;
+    if (!providerName.Contains("InMemory", StringComparison.OrdinalIgnoreCase))
+    {
+        context.Database.Migrate();
+    }
     if (!context.Students.Any())
     {
         var students = new List<Student>

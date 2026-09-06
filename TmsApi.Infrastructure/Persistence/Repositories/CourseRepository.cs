@@ -13,5 +13,5 @@ public class CourseRepository(TmsDbContext context) : ICourseRepository
         context
             .Courses.AsNoTracking()
             .Include(c => c.Enrollments)
-            .FirstOrDefaultAsync(c => c.Code == code, ct);
+            .FirstOrDefaultAsync(c => c.CourseCode == code, ct);
 }

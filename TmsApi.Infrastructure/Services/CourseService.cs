@@ -32,10 +32,25 @@ public class CourseService(
             .Where(c => c.Id == id)
             .Select(c => new CourseResponseDto(
                 c.Id,
-                c.Code,
-                c.Title,
-                c.MaxCapacity,
-                c.Enrollments.Count
+                c.CourseCode,
+                c.CourseName,
+                c.Description,
+                c.Credits,
+                c.DepartmentId,
+                c.ProgramId,
+                c.Level,
+                c.Semester,
+                c.CourseType,
+                c.PrerequisiteCourseId,
+                c.DurationHours,
+                c.Status,
+                c.IsPublished,
+                c.CreatedAt,
+                c.UpdatedAt,
+                c.CreatedBy,
+                c.UpdatedBy,
+                c.IsDeleted,
+                c.DeletedAt
             ))
             .FirstOrDefaultAsync(ct);
         if (course is null)
@@ -51,13 +66,28 @@ public class CourseService(
     {
         return context
             .Courses.AsNoTracking()
-            .Where(c => c.Code == code)
+            .Where(c => c.CourseCode == code)
             .Select(c => new CourseResponseDto(
                 c.Id,
-                c.Code,
-                c.Title,
-                c.MaxCapacity,
-                c.Enrollments.Count
+                c.CourseCode,
+                c.CourseName,
+                c.Description,
+                c.Credits,
+                c.DepartmentId,
+                c.ProgramId,
+                c.Level,
+                c.Semester,
+                c.CourseType,
+                c.PrerequisiteCourseId,
+                c.DurationHours,
+                c.Status,
+                c.IsPublished,
+                c.CreatedAt,
+                c.UpdatedAt,
+                c.CreatedBy,
+                c.UpdatedBy,
+                c.IsDeleted,
+                c.DeletedAt
             ))
             .FirstOrDefaultAsync(cancellationToken);
     }
@@ -79,8 +109,8 @@ public class CourseService(
                 var s = request.Search;
                 list = list
                     .Where(c =>
-                        c.Title.Contains(s, StringComparison.OrdinalIgnoreCase)
-                        || c.Code.Contains(s, StringComparison.OrdinalIgnoreCase)
+                        c.CourseName.Contains(s, StringComparison.OrdinalIgnoreCase)
+                        || c.CourseCode.Contains(s, StringComparison.OrdinalIgnoreCase)
                     )
                     .ToList();
             }
@@ -89,16 +119,13 @@ public class CourseService(
 
             var ordered = request.OrderBy switch
             {
-                "Title" => request.Descending
-                    ? list.OrderByDescending(c => c.Title)
-                    : list.OrderBy(c => c.Title),
-                "Code" => request.Descending
-                    ? list.OrderByDescending(c => c.Code)
-                    : list.OrderBy(c => c.Code),
-                "MaxCapacity" => request.Descending
-                    ? list.OrderByDescending(c => c.MaxCapacity)
-                    : list.OrderBy(c => c.MaxCapacity),
-                _ => list.OrderBy(c => c.Title),
+                "CourseName" => request.Descending
+                    ? list.OrderByDescending(c => c.CourseName)
+                    : list.OrderBy(c => c.CourseName),
+                "CourseCode" => request.Descending
+                    ? list.OrderByDescending(c => c.CourseCode)
+                    : list.OrderBy(c => c.CourseCode),
+                _ => list.OrderBy(c => c.CourseName),
             };
 
             var items = ordered
@@ -106,10 +133,25 @@ public class CourseService(
                 .Take(request.PageSize)
                 .Select(c => new CourseResponseDto(
                     c.Id,
-                    c.Code,
-                    c.Title,
-                    c.MaxCapacity,
-                    c.Enrollments.Count
+                    c.CourseCode,
+                    c.CourseName,
+                    c.Description,
+                    c.Credits,
+                    c.DepartmentId,
+                    c.ProgramId,
+                    c.Level,
+                    c.Semester,
+                    c.CourseType,
+                    c.PrerequisiteCourseId,
+                    c.DurationHours,
+                    c.Status,
+                    c.IsPublished,
+                    c.CreatedAt,
+                    c.UpdatedAt,
+                    c.CreatedBy,
+                    c.UpdatedBy,
+                    c.IsDeleted,
+                    c.DeletedAt
                 ))
                 .ToList();
 
@@ -124,35 +166,46 @@ public class CourseService(
 
         // Relational provider: use ILike for case-insensitive search
         query = query.Where(c =>
-            EF.Functions.ILike(c.Title, $"%{request.Search}%")
-            || EF.Functions.ILike(c.Code, $"%{request.Search}%")
+            EF.Functions.ILike(c.CourseName, $"%{request.Search}%")
+            || EF.Functions.ILike(c.CourseCode, $"%{request.Search}%")
         );
         var totalCountDb = await query.CountAsync(ct);
         query = request.OrderBy switch
         {
-            "Title" => request.Descending
-                ? query.OrderByDescending(c => c.Title)
-                : query.OrderBy(c => c.Title),
+            "CourseName" => request.Descending
+                ? query.OrderByDescending(c => c.CourseName)
+                : query.OrderBy(c => c.CourseName),
 
-            "Code" => request.Descending
-                ? query.OrderByDescending(c => c.Code)
-                : query.OrderBy(c => c.Code),
+            "CourseCode" => request.Descending
+                ? query.OrderByDescending(c => c.CourseCode)
+                : query.OrderBy(c => c.CourseCode),
 
-            "MaxCapacity" => request.Descending
-                ? query.OrderByDescending(c => c.MaxCapacity)
-                : query.OrderBy(c => c.MaxCapacity),
-
-            _ => query.OrderBy(c => c.Title),
+            _ => query.OrderBy(c => c.CourseName),
         };
         var itemsDb = await query
             .Skip((request.Page - 1) * request.PageSize)
             .Take(request.PageSize)
             .Select(c => new CourseResponseDto(
                 c.Id,
-                c.Code,
-                c.Title,
-                c.MaxCapacity,
-                c.Enrollments.Count
+                c.CourseCode,
+                c.CourseName,
+                c.Description,
+                c.Credits,
+                c.DepartmentId,
+                c.ProgramId,
+                c.Level,
+                c.Semester,
+                c.CourseType,
+                c.PrerequisiteCourseId,
+                c.DurationHours,
+                c.Status,
+                c.IsPublished,
+                c.CreatedAt,
+                c.UpdatedAt,
+                c.CreatedBy,
+                c.UpdatedBy,
+                c.IsDeleted,
+                c.DeletedAt
             ))
             .ToListAsync(ct);
         return new PagedResponse<CourseResponseDto>
@@ -165,7 +218,7 @@ public class CourseService(
     }
 
     public Task<bool> CodeExistsAsync(string code, CancellationToken ct) =>
-        context.Courses.AsNoTracking().AnyAsync(c => c.Code == code, ct);
+        context.Courses.AsNoTracking().AnyAsync(c => c.CourseCode == code, ct);
 
     public async Task<CourseResponseDto> CreateAsync(
         CreateCourseRequest request,
@@ -174,13 +227,25 @@ public class CourseService(
     {
         var course = new Course
         {
-            Code = request.Code,
-            Title = request.Title,
-            MaxCapacity = request.MaxCapacity,
+            CourseCode = request.CourseCode,
+            CourseName = request.CourseName,
+            Description = request.Description,
+            Credits = request.Credits,
+            DepartmentId = request.DepartmentId,
+            ProgramId = request.ProgramId,
+            Level = request.Level,
+            Semester = request.Semester,
+            CourseType = request.CourseType,
+            PrerequisiteCourseId = request.PrerequisiteCourseId,
+            DurationHours = request.DurationHours,
+            Status = request.Status,
+            IsPublished = request.IsPublished,
+            IsDeleted = false,
+            CreatedAt = DateTime.UtcNow,
         };
         context.Courses.Add(course);
         await context.SaveChangesAsync(ct);
-        logger.LogInformation("Created course {CourseId} ({Code})", course.Id, course.Code);
+        logger.LogInformation("Created course {CourseId} ({CourseCode})", course.Id, course.CourseCode);
         await cachedService.InvalidateCourseCacheAsync(ct);
         return (await GetByIdAsync(course.Id, ct))!;
     }
@@ -196,7 +261,28 @@ public class CourseService(
     {
         var courses = await context
             .Courses.AsNoTracking()
-            .Select(c => new CourseResponseDto(c.Id, c.Code, c.Title, c.MaxCapacity, 0))
+            .Select(c => new CourseResponseDto(
+                c.Id,
+                c.CourseCode,
+                c.CourseName,
+                c.Description,
+                c.Credits,
+                c.DepartmentId,
+                c.ProgramId,
+                c.Level,
+                c.Semester,
+                c.CourseType,
+                c.PrerequisiteCourseId,
+                c.DurationHours,
+                c.Status,
+                c.IsPublished,
+                c.CreatedAt,
+                c.UpdatedAt,
+                c.CreatedBy,
+                c.UpdatedBy,
+                c.IsDeleted,
+                c.DeletedAt
+            ))
             .ToListAsync();
         return courses;
     }
@@ -214,7 +300,28 @@ public class CourseService(
                 context.Courses,
                 g => g.CourseId,
                 c => c.Id,
-                (g, c) => new CourseResponseDto(c.Id, c.Code, c.Title, c.MaxCapacity, g.Count)
+                (g, c) => new CourseResponseDto(
+                    c.Id,
+                    c.CourseCode,
+                    c.CourseName,
+                    c.Description,
+                    c.Credits,
+                    c.DepartmentId,
+                    c.ProgramId,
+                    c.Level,
+                    c.Semester,
+                    c.CourseType,
+                    c.PrerequisiteCourseId,
+                    c.DurationHours,
+                    c.Status,
+                    c.IsPublished,
+                    c.CreatedAt,
+                    c.UpdatedAt,
+                    c.CreatedBy,
+                    c.UpdatedBy,
+                    c.IsDeleted,
+                    c.DeletedAt
+                )
             )
             .ToListAsync(ct);
 

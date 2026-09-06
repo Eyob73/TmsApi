@@ -5,7 +5,7 @@ namespace TmsApi.Infrastructure.Persistence.Configurations;
 
 public static class DataSeeder
 {
-    private static readonly (string Code, string Title, int MaxCapacity)[] Courses =
+    private static readonly (string CourseCode, string CourseName, int MaxCapacity)[] Courses =
     [
         ("CSE-101", "Web Development Fundamentals", 30),
         ("CSE-102", "TypeScript Essentials", 30),
@@ -45,13 +45,20 @@ public static class DataSeeder
         {
             return;
         }
-        foreach (var (code, title, maxCapacity) in Courses)
+        foreach (var (courseCode, courseName, maxCapacity) in Courses)
         {
             context.Courses.Add(
                 new Course
                 {
-                    Code = code,
-                    Title = title,
+                    CourseCode = courseCode,
+                    CourseName = courseName,
+                    Credits = 3,
+                    DepartmentId = Guid.NewGuid(),
+                    CourseType = "Core",
+                    Status = "Active",
+                    IsPublished = true,
+                    IsDeleted = false,
+                    CreatedAt = DateTime.UtcNow,
                     MaxCapacity = maxCapacity,
                 }
             );

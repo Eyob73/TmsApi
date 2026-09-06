@@ -10,7 +10,7 @@ public class GetStudentScheduleHandler(IEnrollmentRepository repo)
     {
         var enrollments = await repo.GetByStudentIdAsync(query.StudentId, ct);
         var items = enrollments
-            .Select(e => new ScheduleItemDto(e.Course.Code, e.Course.Title, "TBD"))
+            .Select(e => new ScheduleItemDto(e.Course.CourseCode, e.Course.CourseName, "TBD"))
             .ToList();
         return new ScheduleDto(query.StudentId, items);
     }

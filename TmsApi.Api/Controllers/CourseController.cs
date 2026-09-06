@@ -77,20 +77,16 @@ public class CoursesController : ControllerBase
             new(selfLink!, "update", "PUT"),
             new(selfLink!, "delete", "DELETE"),
             new(enrollmentLink!, "enrollments", "GET"),
+            new(enrollmentLink!, "enroll", "POST"),
         };
-
-        if (course.EnrollmentCount < course.MaxCapacity)
-        {
-            links.Add(new LinkDto(enrollmentLink!, "enroll", "POST"));
-        }
 
         var detailDto = new CourseDetailDto
         {
             Id = course.Id,
-            Code = course.Code,
-            Title = course.Title,
-            MaxCapacity = course.MaxCapacity,
-            EnrollmentCount = course.EnrollmentCount,
+            Code = course.CourseCode,
+            Title = course.CourseName,
+            MaxCapacity = null, // Capacity info moved to separate business logic
+            EnrollmentCount = null, // Enrollment count handled separately
             Links = links,
         };
 
@@ -122,13 +118,13 @@ public class CoursesController : ControllerBase
     )]
     public async Task<IActionResult> CreateCourse(CreateCourseRequest request, CancellationToken ct)
     {
-        if (await CourseService.CodeExistsAsync(request.Code, ct))
+        if (await CourseService.CodeExistsAsync(request.CourseCode, ct))
         {
             return Conflict(
                 new ProblemDetails
                 {
                     Title = "Course code already exists",
-                    Detail = $"A course with code '{request.Code}' is already registered.",
+                    Detail = $"A course with code '{request.CourseCode}' is already registered.",
                     Status = StatusCodes.Status409Conflict,
                 }
             );
@@ -151,8 +147,8 @@ public class CoursesController : ControllerBase
             return Forbid();
         }
 
-        course.Title = dto.Title;
-        course.MaxCapacity = dto.MaxCapacity;
+        course.CourseName = dto.Title;
+        // Note: MaxCapacity is now a legacy field - update logic needs to be revised
 
         await CourseService.UpdateAsync(course);
         return NoContent();

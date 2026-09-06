@@ -117,7 +117,7 @@ public class EnrollmentService(TmsDbContext context, ILogger<EnrollmentService> 
         return context
             .Enrollments.AsNoTracking()
             .Include(e => e.Course)
-            .AnyAsync(e => e.StudentId == studentId && e.Course.Code == courseCode, ct);
+            .AnyAsync(e => e.StudentId == studentId && e.Course.CourseCode == courseCode, ct);
     }
 }
 

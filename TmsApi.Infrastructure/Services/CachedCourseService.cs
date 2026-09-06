@@ -28,10 +28,25 @@ public class CachedCourseService(
                     ?? throw new FileNotFoundException($"Course {state.code} notfound.");
                 return new CourseResponseDto(
                     course.Id,
-                    course.Title,
-                    course.Code,
-                    course.MaxCapacity,
-                    course.Enrollments.Count
+                    course.CourseCode,
+                    course.CourseName,
+                    course.Description,
+                    course.Credits,
+                    course.DepartmentId,
+                    course.ProgramId,
+                    course.Level,
+                    course.Semester,
+                    course.CourseType,
+                    course.PrerequisiteCourseId,
+                    course.DurationHours,
+                    course.Status,
+                    course.IsPublished,
+                    course.CreatedAt,
+                    course.UpdatedAt,
+                    course.CreatedBy,
+                    course.UpdatedBy,
+                    course.IsDeleted,
+                    course.DeletedAt
                 );
             },
             tags: [CacheKeys.CoursesTag],
@@ -63,10 +78,25 @@ public class CachedCourseService(
                 return courses
                     .Select(c => new CourseResponseDto(
                         c.Id,
-                        c.Title,
-                        c.Code,
-                        c.MaxCapacity,
-                        c.Enrollments.Count
+                        c.CourseCode,
+                        c.CourseName,
+                        c.Description,
+                        c.Credits,
+                        c.DepartmentId,
+                        c.ProgramId,
+                        c.Level,
+                        c.Semester,
+                        c.CourseType,
+                        c.PrerequisiteCourseId,
+                        c.DurationHours,
+                        c.Status,
+                        c.IsPublished,
+                        c.CreatedAt,
+                        c.UpdatedAt,
+                        c.CreatedBy,
+                        c.UpdatedBy,
+                        c.IsDeleted,
+                        c.DeletedAt
                     ))
                     .ToList();
             },

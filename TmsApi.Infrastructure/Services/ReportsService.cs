@@ -24,17 +24,17 @@ public class ReportsService(TmsDbContext context) : IReportsService
     public async Task<IReadOnlyList<CourseEnrollmentCount>> GetCourseEnrollmentCountsAsync()
     {
         var list = await context
-            .Courses.Select(c => new { c.Title, EnrollmentCount = c.Enrollments.Count })
+            .Courses.Select(c => new { c.CourseName, EnrollmentCount = c.Enrollments.Count })
             .OrderByDescending(x => x.EnrollmentCount)
             .ToListAsync();
 
-        return list.Select(x => new CourseEnrollmentCount(x.Title, x.EnrollmentCount)).ToList();
+        return list.Select(x => new CourseEnrollmentCount(x.CourseName, x.EnrollmentCount)).ToList();
     }
 
     public async Task<IReadOnlyList<CourseAverageGPA>> GetCourseAverageGPAsAsync()
     {
         var list = await context
-            .Enrollments.GroupBy(e => e.Course.Title)
+            .Enrollments.GroupBy(e => e.Course.CourseName)
             .Select(g => new { Course = g.Key, AverageGPA = g.Average(e => e.Student.GPA) })
             .ToListAsync();
 

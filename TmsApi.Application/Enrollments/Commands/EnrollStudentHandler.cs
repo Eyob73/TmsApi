@@ -20,9 +20,9 @@ public class EnrollStudentHandler(
             return Result<EnrollmentCreated, EnrollmentError>.Failure(
                 EnrollmentError.CourseNotFound(command.CourseCode)
             );
-        if (course.Enrollments.Count >= course.MaxCapacity)
+        if (course.MaxCapacity.HasValue && course.Enrollments.Count >= course.MaxCapacity.Value)
             return Result<EnrollmentCreated, EnrollmentError>.Failure(
-                EnrollmentError.CourseFull(course.Title, course.MaxCapacity)
+                EnrollmentError.CourseFull(course.CourseName, course.MaxCapacity.Value)
             );
         if (await enrollmentRepo.ExistsAsync(command.StudentId, command.CourseCode, ct))
             return Result<EnrollmentCreated, EnrollmentError>.Failure(
@@ -36,7 +36,7 @@ public class EnrollStudentHandler(
         };
         await enrollmentRepo.AddAsync(enrollment, ct);
         return Result<EnrollmentCreated, EnrollmentError>.Success(
-            new EnrollmentCreated(enrollment.Id, enrollment.StudentId, course.Code)
+            new EnrollmentCreated(enrollment.Id, enrollment.StudentId, course.CourseCode)
         );
     }
 }

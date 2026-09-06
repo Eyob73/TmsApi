@@ -22,14 +22,14 @@ public class CoursesController(TmsDbContext context) : ControllerBase
         var baseQuery = context.Courses.AsNoTracking();
         var totalCount = await baseQuery.CountAsync(ct);
         var items = await baseQuery
-            .OrderBy(c => c.Title)
+            .OrderBy(c => c.CourseName)
             .Skip((page - 1) * pageSize)
             .Take(pageSize)
             .Select(c => new
             {
                 c.Id,
-                c.Code,
-                c.Title,
+                c.CourseCode,
+                c.CourseName,
                 c.MaxCapacity,
                 EnrollmentCount = c.Enrollments.Count,
             })

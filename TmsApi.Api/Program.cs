@@ -542,7 +542,7 @@ if (app.Environment.IsDevelopment())
     });
 }
 
-app.MapHub<TmsHub>("/hubs/tms");
+app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
 
 app.MapControllers();
 
@@ -641,20 +641,41 @@ using (var scope = app.Services.CreateScope())
         {
             new()
             {
-                Code = "CS-101",
-                Title = "Introduction to Computer Science",
+                CourseCode = "CS-101",
+                CourseName = "Introduction to Computer Science",
+                Credits = 3,
+                DepartmentId = Guid.NewGuid(),
+                CourseType = "Core",
+                Status = "Active",
+                IsPublished = true,
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
                 MaxCapacity = 30,
             },
             new()
             {
-                Code = "CS-201",
-                Title = "Data Structures and Algorithms",
+                CourseCode = "CS-201",
+                CourseName = "Data Structures and Algorithms",
+                Credits = 3,
+                DepartmentId = Guid.NewGuid(),
+                CourseType = "Core",
+                Status = "Active",
+                IsPublished = true,
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
                 MaxCapacity = 25,
             },
             new()
             {
-                Code = "MAT-101",
-                Title = "Calculus I",
+                CourseCode = "MAT-101",
+                CourseName = "Calculus I",
+                Credits = 4,
+                DepartmentId = Guid.NewGuid(),
+                CourseType = "Core",
+                Status = "Active",
+                IsPublished = true,
+                IsDeleted = false,
+                CreatedAt = DateTime.UtcNow,
                 MaxCapacity = 40,
             },
         };

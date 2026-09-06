@@ -23,8 +23,15 @@ public class EnrollStudentHandlerTests
         var course = new Course
         {
             Id = 1,
-            Code = "CS-401",
-            Title = "Advanced Web Dev",
+            CourseCode = "CS-401",
+            CourseName = "Advanced Web Dev",
+            Credits = 3,
+            DepartmentId = Guid.NewGuid(),
+            CourseType = "Core",
+            Status = "Active",
+            IsPublished = true,
+            IsDeleted = false,
+            CreatedAt = DateTime.UtcNow,
             MaxCapacity = 30,
             Enrollments = new List<Enrollment>(),
         };
@@ -58,8 +65,15 @@ public class EnrollStudentHandlerTests
         var course = new Course
         {
             Id = 1,
-            Code = "CS-401",
-            Title = "Advanced Web Dev",
+            CourseCode = "CS-401",
+            CourseName = "Advanced Web Dev",
+            Credits = 3,
+            DepartmentId = Guid.NewGuid(),
+            CourseType = "Core",
+            Status = "Active",
+            IsPublished = true,
+            IsDeleted = false,
+            CreatedAt = DateTime.UtcNow,
             MaxCapacity = 35,
             Enrollments = Enumerable
                 .Range(1, 35)
@@ -97,8 +111,15 @@ public class EnrollStudentHandlerTests
         var course = new Course
         {
             Id = 1,
-            Code = "CS-401",
-            Title = "Advanced Web Dev",
+            CourseCode = "CS-401",
+            CourseName = "Advanced Web Dev",
+            Credits = 3,
+            DepartmentId = Guid.NewGuid(),
+            CourseType = "Core",
+            Status = "Active",
+            IsPublished = true,
+            IsDeleted = false,
+            CreatedAt = DateTime.UtcNow,
             MaxCapacity = 35,
             Enrollments = Enumerable
                 .Range(1, 20)

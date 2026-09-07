@@ -107,8 +107,7 @@ public class CourseService(
             if (!string.IsNullOrWhiteSpace(request.Search))
             {
                 var s = request.Search;
-                list = list
-                    .Where(c =>
+                list = list.Where(c =>
                         c.CourseName.Contains(s, StringComparison.OrdinalIgnoreCase)
                         || c.CourseCode.Contains(s, StringComparison.OrdinalIgnoreCase)
                     )
@@ -245,8 +244,131 @@ public class CourseService(
         };
         context.Courses.Add(course);
         await context.SaveChangesAsync(ct);
-        logger.LogInformation("Created course {CourseId} ({CourseCode})", course.Id, course.CourseCode);
+        logger.LogInformation(
+            "Created course {CourseId} ({CourseCode})",
+            course.Id,
+            course.CourseCode
+        );
         await cachedService.InvalidateCourseCacheAsync(ct);
+        return (await GetByIdAsync(course.Id, ct))!;
+    }
+
+    public async Task<CourseResponseDto> UpdateAsync(
+        int id,
+        UpdateCourseRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var course = await context.Courses.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            throw new KeyNotFoundException($"Course {id} was not found.");
+        }
+
+        if (
+            course.CourseCode != request.CourseCode
+            && await context.Courses.AnyAsync(
+                c => c.CourseCode == request.CourseCode && c.Id != id,
+                ct
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"A course with code '{request.CourseCode}' already exists."
+            );
+        }
+
+        course.CourseCode = request.CourseCode;
+        course.CourseName = request.CourseName;
+        course.Description = request.Description;
+        course.Credits = request.Credits;
+        course.DepartmentId = request.DepartmentId;
+        course.ProgramId = request.ProgramId;
+        course.Level = request.Level;
+        course.Semester = request.Semester;
+        course.CourseType = request.CourseType;
+        course.PrerequisiteCourseId = request.PrerequisiteCourseId;
+        course.DurationHours = request.DurationHours;
+        course.Status = request.Status;
+        course.IsPublished = request.IsPublished;
+        course.UpdatedAt = DateTime.UtcNow;
+
+        await context.SaveChangesAsync(ct);
+        await cachedService.InvalidateCourseCacheAsync(ct);
+
+        return (await GetByIdAsync(course.Id, ct))!;
+    }
+
+    public async Task<CourseResponseDto> PatchAsync(
+        int id,
+        PatchCourseRequest request,
+        CancellationToken ct = default
+    )
+    {
+        var course = await context.Courses.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null)
+        {
+            throw new KeyNotFoundException($"Course {id} was not found.");
+        }
+
+        if (
+            !string.IsNullOrWhiteSpace(request.CourseCode)
+            && request.CourseCode != course.CourseCode
+            && await context.Courses.AnyAsync(
+                c => c.CourseCode == request.CourseCode && c.Id != id,
+                ct
+            )
+        )
+        {
+            throw new InvalidOperationException(
+                $"A course with code '{request.CourseCode}' already exists."
+            );
+        }
+
+        if (!string.IsNullOrWhiteSpace(request.CourseCode))
+            course.CourseCode = request.CourseCode;
+
+        if (!string.IsNullOrWhiteSpace(request.CourseName))
+            course.CourseName = request.CourseName;
+
+        if (request.Description is not null)
+            course.Description = request.Description;
+
+        if (request.Credits.HasValue)
+            course.Credits = request.Credits.Value;
+
+        if (request.DepartmentId.HasValue)
+            course.DepartmentId = request.DepartmentId.Value;
+
+        if (request.ProgramId.HasValue)
+            course.ProgramId = request.ProgramId.Value;
+
+        if (request.Level is not null)
+            course.Level = request.Level;
+
+        if (request.Semester is not null)
+            course.Semester = request.Semester;
+
+        if (!string.IsNullOrWhiteSpace(request.CourseType))
+            course.CourseType = request.CourseType;
+
+        if (request.PrerequisiteCourseId.HasValue)
+            course.PrerequisiteCourseId = request.PrerequisiteCourseId.Value;
+
+        if (request.DurationHours.HasValue)
+            course.DurationHours = request.DurationHours.Value;
+
+        if (!string.IsNullOrWhiteSpace(request.Status))
+            course.Status = request.Status;
+
+        if (request.IsPublished.HasValue)
+            course.IsPublished = request.IsPublished.Value;
+
+        course.UpdatedAt = DateTime.UtcNow;
+
+        await context.SaveChangesAsync(ct);
+        await cachedService.InvalidateCourseCacheAsync(ct);
+
         return (await GetByIdAsync(course.Id, ct))!;
     }
 
@@ -300,28 +422,29 @@ public class CourseService(
                 context.Courses,
                 g => g.CourseId,
                 c => c.Id,
-                (g, c) => new CourseResponseDto(
-                    c.Id,
-                    c.CourseCode,
-                    c.CourseName,
-                    c.Description,
-                    c.Credits,
-                    c.DepartmentId,
-                    c.ProgramId,
-                    c.Level,
-                    c.Semester,
-                    c.CourseType,
-                    c.PrerequisiteCourseId,
-                    c.DurationHours,
-                    c.Status,
-                    c.IsPublished,
-                    c.CreatedAt,
-                    c.UpdatedAt,
-                    c.CreatedBy,
-                    c.UpdatedBy,
-                    c.IsDeleted,
-                    c.DeletedAt
-                )
+                (g, c) =>
+                    new CourseResponseDto(
+                        c.Id,
+                        c.CourseCode,
+                        c.CourseName,
+                        c.Description,
+                        c.Credits,
+                        c.DepartmentId,
+                        c.ProgramId,
+                        c.Level,
+                        c.Semester,
+                        c.CourseType,
+                        c.PrerequisiteCourseId,
+                        c.DurationHours,
+                        c.Status,
+                        c.IsPublished,
+                        c.CreatedAt,
+                        c.UpdatedAt,
+                        c.CreatedBy,
+                        c.UpdatedBy,
+                        c.IsDeleted,
+                        c.DeletedAt
+                    )
             )
             .ToListAsync(ct);
 

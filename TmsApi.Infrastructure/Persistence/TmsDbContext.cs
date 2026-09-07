@@ -10,6 +10,8 @@ public class TmsDbContext : IdentityDbContext<TmsUser>
         : base(options) { }
 
     public DbSet<Student> Students => Set<Student>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Program> Programs => Set<Program>();
     public DbSet<Course> Courses => Set<Course>();
     public DbSet<Enrollment> Enrollments => Set<Enrollment>();
     public DbSet<Certificate> Certificates => Set<Certificate>();

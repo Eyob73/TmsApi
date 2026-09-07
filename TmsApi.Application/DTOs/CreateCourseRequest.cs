@@ -23,8 +23,7 @@ public record CreateCourseRequest
     [Required, Range(1, 10)]
     public required int Credits { get; init; }
 
-    [Required]
-    public required Guid DepartmentId { get; init; }
+    public Guid? DepartmentId { get; init; }
 
     public Guid? ProgramId { get; init; }
 

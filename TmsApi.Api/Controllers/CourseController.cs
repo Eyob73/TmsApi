@@ -134,10 +134,22 @@ public class CoursesController : ControllerBase
         return CreatedAtAction(nameof(GetCourseById), new { id = result.Id }, result);
     }
 
-    [HttpPut("{id}")]
-    public async Task<IActionResult> UpdateCourse(int id, [FromBody] UpdateCourseDto dto)
+    [HttpPut("{id:int}")]
+    [ProducesResponseType(typeof(CourseResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> UpdateCourse(
+        int id,
+        [FromBody] UpdateCourseRequest request,
+        CancellationToken ct
+    )
     {
-        var course = await CourseService.FindAsync(id);
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        var course = await CourseService.FindAsync(id, ct);
         if (course == null)
             return NotFound();
 
@@ -147,10 +159,72 @@ public class CoursesController : ControllerBase
             return Forbid();
         }
 
-        course.CourseName = dto.Title;
-        // Note: MaxCapacity is now a legacy field - update logic needs to be revised
+        try
+        {
+            var updated = await CourseService.UpdateAsync(id, request, ct);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(
+                new ProblemDetails
+                {
+                    Title = "Course update failed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status409Conflict,
+                }
+            );
+        }
+    }
 
-        await CourseService.UpdateAsync(course);
-        return NoContent();
+    [HttpPatch("{id:int}")]
+    [ProducesResponseType(typeof(CourseResponseDto), StatusCodes.Status200OK)]
+    [ProducesResponseType(typeof(ValidationProblemDetails), StatusCodes.Status400BadRequest)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> PatchCourse(
+        int id,
+        [FromBody] PatchCourseRequest request,
+        CancellationToken ct
+    )
+    {
+        if (!ModelState.IsValid)
+        {
+            return ValidationProblem(ModelState);
+        }
+
+        var course = await CourseService.FindAsync(id, ct);
+        if (course == null)
+            return NotFound();
+
+        var authResult = await _authorizationService.AuthorizeAsync(User, course, "CanEditCourse");
+        if (!authResult.Succeeded)
+        {
+            return Forbid();
+        }
+
+        try
+        {
+            var updated = await CourseService.PatchAsync(id, request, ct);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+        catch (InvalidOperationException ex)
+        {
+            return Conflict(
+                new ProblemDetails
+                {
+                    Title = "Course patch failed",
+                    Detail = ex.Message,
+                    Status = StatusCodes.Status409Conflict,
+                }
+            );
+        }
     }
 }

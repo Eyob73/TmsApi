@@ -6,7 +6,7 @@ public record CourseResponseDto(
     string CourseName,
     string? Description,
     int Credits,
-    Guid DepartmentId,
+    Guid? DepartmentId,
     Guid? ProgramId,
     string? Level,
     string? Semester,

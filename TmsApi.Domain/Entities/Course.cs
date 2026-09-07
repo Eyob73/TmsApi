@@ -7,7 +7,7 @@ namespace TmsApi.Domain.Entities
         public required string CourseName { get; set; }
         public string? Description { get; set; }
         public required int Credits { get; set; }
-        public required Guid DepartmentId { get; set; }
+        public Guid? DepartmentId { get; set; }
         public Guid? ProgramId { get; set; }
         public string? Level { get; set; }
         public string? Semester { get; set; }
@@ -24,6 +24,8 @@ namespace TmsApi.Domain.Entities
         public DateTime? DeletedAt { get; set; }
         
         // Navigation properties
+        public Department? Department { get; set; }
+        public Program? Program { get; set; }
         public ICollection<Enrollment> Enrollments { get; set; } = new List<Enrollment>();
         public ICollection<Assessment> Assessments { get; set; } = new List<Assessment>();
         public ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();

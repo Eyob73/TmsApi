@@ -24,7 +24,17 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
 
         builder.Property(c => c.Credits).IsRequired();
 
-        builder.Property(c => c.DepartmentId).IsRequired();
+        builder.Property(c => c.DepartmentId);
+
+        builder.HasOne(c => c.Department)
+            .WithMany(d => d.Courses)
+            .HasForeignKey(c => c.DepartmentId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(c => c.Program)
+            .WithMany(p => p.Courses)
+            .HasForeignKey(c => c.ProgramId)
+            .OnDelete(DeleteBehavior.SetNull);
 
         builder.Property(c => c.ProgramId);
 

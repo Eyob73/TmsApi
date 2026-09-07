@@ -60,12 +60,28 @@ public static class DataSeeder
         ("HS301", "Pharmacology Fundamentals", "Health Sciences", "BSc Pharmacy", 18),
     ];
 
-    public static async Task SeedAsync(TmsDbContext context, CancellationToken ct = default)
+    public static async Task SeedAsync(
+        TmsDbContext context,
+        Microsoft.AspNetCore.Identity.RoleManager<Microsoft.AspNetCore.Identity.IdentityRole>? roleManager = null,
+        CancellationToken ct = default
+    )
     {
         var providerName = context.Database.ProviderName ?? string.Empty;
         if (!providerName.Contains("InMemory", StringComparison.OrdinalIgnoreCase))
         {
             await context.Database.MigrateAsync(ct);
+        }
+
+        if (roleManager != null)
+        {
+            string[] defaultRoles = ["Admin", "Instructor", "Student"];
+            foreach (var role in defaultRoles)
+            {
+                if (!await roleManager.RoleExistsAsync(role))
+                {
+                    await roleManager.CreateAsync(new Microsoft.AspNetCore.Identity.IdentityRole(role));
+                }
+            }
         }
 
         if (await context.Departments.AnyAsync(ct))

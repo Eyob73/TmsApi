@@ -302,6 +302,7 @@ builder.Services.AddScoped<IDepartmentService, DepartmentService>();
 builder.Services.AddScoped<IProgramService, ProgramService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
+builder.Services.AddScoped<IUserService, UserService>();
 
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
@@ -440,7 +441,8 @@ builder
         options.Lockout.AllowedForNewUsers = true;
     })
     .AddRoles<IdentityRole>()
-    .AddEntityFrameworkStores<TmsDbContext>();
+    .AddEntityFrameworkStores<TmsDbContext>()
+    .AddDefaultTokenProviders();
 
 builder
     .Services.AddAuthorizationBuilder()
@@ -752,7 +754,8 @@ if (app.Environment.IsDevelopment())
 {
     using var scope = app.Services.CreateScope();
     var context = scope.ServiceProvider.GetRequiredService<TmsDbContext>();
-    await DataSeeder.SeedAsync(context);
+    var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+    await DataSeeder.SeedAsync(context, roleManager);
 }
 
 // --- Lab-only fake certificate service ---

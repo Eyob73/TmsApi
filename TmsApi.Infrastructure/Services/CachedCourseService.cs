@@ -46,7 +46,9 @@ public class CachedCourseService(
                     course.CreatedBy,
                     course.UpdatedBy,
                     course.IsDeleted,
-                    course.DeletedAt
+                    course.DeletedAt,
+                    course.InstructorId,
+                    null
                 );
             },
             tags: [CacheKeys.CoursesTag],
@@ -96,7 +98,9 @@ public class CachedCourseService(
                         c.CreatedBy,
                         c.UpdatedBy,
                         c.IsDeleted,
-                        c.DeletedAt
+                        c.DeletedAt,
+                        c.InstructorId,
+                        null
                     ))
                     .ToList();
             },
@@ -119,3 +123,4 @@ public class CachedCourseService(
         await cache.RemoveByTagAsync(CacheKeys.CoursesTag, ct);
     }
 }
+

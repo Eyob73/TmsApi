@@ -50,8 +50,7 @@ public class CourseService(
                 c.CreatedBy,
                 c.UpdatedBy,
                 c.IsDeleted,
-                c.DeletedAt
-            ))
+                c.DeletedAt, c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
             .FirstOrDefaultAsync(ct);
         if (course is null)
         {
@@ -87,8 +86,7 @@ public class CourseService(
                 c.CreatedBy,
                 c.UpdatedBy,
                 c.IsDeleted,
-                c.DeletedAt
-            ))
+                c.DeletedAt, c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
             .FirstOrDefaultAsync(cancellationToken);
     }
 
@@ -150,8 +148,7 @@ public class CourseService(
                     c.CreatedBy,
                     c.UpdatedBy,
                     c.IsDeleted,
-                    c.DeletedAt
-                ))
+                    c.DeletedAt, c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
                 .ToList();
 
             return new PagedResponse<CourseResponseDto>
@@ -204,8 +201,7 @@ public class CourseService(
                 c.CreatedBy,
                 c.UpdatedBy,
                 c.IsDeleted,
-                c.DeletedAt
-            ))
+                c.DeletedAt, c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
             .ToListAsync(ct);
         return new PagedResponse<CourseResponseDto>
         {
@@ -403,8 +399,7 @@ public class CourseService(
                 c.CreatedBy,
                 c.UpdatedBy,
                 c.IsDeleted,
-                c.DeletedAt
-            ))
+                c.DeletedAt, c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
             .ToListAsync();
         return courses;
     }
@@ -443,15 +438,49 @@ public class CourseService(
                         c.CreatedBy,
                         c.UpdatedBy,
                         c.IsDeleted,
-                        c.DeletedAt
-                    )
+                        c.DeletedAt, c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault())
             )
             .ToListAsync(ct);
 
         return top;
     }
-}
 
+    public async Task<CourseResponseDto> AssignInstructorAsync(int id, string instructorId, CancellationToken ct = default)
+    {
+        var course = await context.Courses.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null) throw new KeyNotFoundException("Course not found");
+        course.InstructorId = instructorId;
+        course.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync(ct);
+        await cachedService.InvalidateCourseCacheAsync(ct);
+        return (await GetByIdAsync(id, ct))!;
+    }
+
+    public async Task<CourseResponseDto> RemoveInstructorAsync(int id, CancellationToken ct = default)
+    {
+        var course = await context.Courses.FirstOrDefaultAsync(c => c.Id == id, ct);
+        if (course is null) throw new KeyNotFoundException("Course not found");
+        course.InstructorId = null;
+        course.UpdatedAt = DateTime.UtcNow;
+        await context.SaveChangesAsync(ct);
+        await cachedService.InvalidateCourseCacheAsync(ct);
+        return (await GetByIdAsync(id, ct))!;
+    }
+
+    public async Task<IReadOnlyList<CourseResponseDto>> GetCoursesByInstructorAsync(string instructorId, CancellationToken ct = default)
+    {
+        return await context.Courses.AsNoTracking()
+            .Where(c => c.InstructorId == instructorId)
+            .Select(c => new CourseResponseDto(
+                c.Id, c.CourseCode, c.CourseName, c.Description, c.Credits, c.DepartmentId, c.ProgramId,
+                c.Level, c.Semester, c.CourseType, c.PrerequisiteCourseId, c.DurationHours, c.Status,
+                c.IsPublished, c.CreatedAt, c.UpdatedAt, c.CreatedBy, c.UpdatedBy, c.IsDeleted, c.DeletedAt,
+                c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
+            .ToListAsync(ct);
+    }
+}
 public record CourseDto(int Id, string Code, string Title, int MaxCapacity);
 
 public record TopCourseDto(string Title, int EnrollmentCount);
+
+

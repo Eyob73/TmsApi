@@ -4,6 +4,7 @@ using TmsApi.Application.DTOs;
 using TmsApi.Application.Enrollments.Commands;
 using TmsApi.Application.Interfaces;
 using TmsApi.Domain.Entities;
+using TmsApi.Domain.Enums;
 
 namespace TmsApi.Tests;
 
@@ -81,7 +82,7 @@ public class EnrollStudentHandlerTests
                 {
                     Id = i,
                     CourseId = 1,
-                    Status = "Pending",
+                    Status = EnrollmentStatus.Pending,
                 })
                 .ToList(),
         };
@@ -127,7 +128,7 @@ public class EnrollStudentHandlerTests
                 {
                     Id = i,
                     CourseId = 1,
-                    Status = "Pending",
+                    Status = EnrollmentStatus.Pending,
                 })
                 .ToList(),
         };

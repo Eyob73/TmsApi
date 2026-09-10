@@ -20,5 +20,7 @@ public record CourseResponseDto(
     Guid? CreatedBy,
     Guid? UpdatedBy,
     bool IsDeleted,
-    DateTime? DeletedAt
+    DateTime? DeletedAt,
+    string? InstructorId,
+    string? InstructorName
 );

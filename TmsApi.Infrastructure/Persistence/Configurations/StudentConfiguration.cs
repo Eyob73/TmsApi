@@ -1,3 +1,4 @@
+using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TmsApi.Domain.Entities;
@@ -14,10 +15,12 @@ public class StudentConfiguration : IEntityTypeConfiguration<Student>
         builder.Property(s => s.Id).ValueGeneratedOnAdd();
 
         builder.Property(s => s.RegistrationNumber).IsRequired().HasMaxLength(32);
-
         builder.HasIndex(s => s.RegistrationNumber).IsUnique();
 
         builder.Property(s => s.Name).IsRequired().HasMaxLength(200);
+        builder.Property(s => s.Email).HasMaxLength(200);
+        builder.Property(s => s.UserId).HasMaxLength(100);
+        builder.HasIndex(s => s.UserId);
 
         builder.Property(s => s.GPA).HasPrecision(3, 2);
 

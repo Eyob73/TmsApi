@@ -64,9 +64,16 @@ public class CourseConfiguration : IEntityTypeConfiguration<Course>
 
         builder.Property(c => c.DeletedAt);
 
+        // Enrollment configuration
+        builder.Property(c => c.MaxCapacity).HasDefaultValue(30);
+        builder.Property(c => c.IsEnrollmentOpen).IsRequired().HasDefaultValue(true);
+        builder.Property(c => c.EnrollmentStartDate);
+        builder.Property(c => c.EnrollmentEndDate);
+        builder.Property(c => c.InstructorId);
+        builder.Ignore(c => c.IsActive);
+
         // Legacy fields for backward compatibility
         builder.Ignore(c => c.Code);
         builder.Ignore(c => c.Title);
-        builder.Ignore(c => c.MaxCapacity);
     }
 }

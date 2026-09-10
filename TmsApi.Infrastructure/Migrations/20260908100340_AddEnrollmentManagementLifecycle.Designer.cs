@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TmsApi.Infrastructure.Persistence;
@@ -11,9 +12,11 @@ using TmsApi.Infrastructure.Persistence;
 namespace TmsApi.Infrastructure.Migrations
 {
     [DbContext(typeof(TmsDbContext))]
-    partial class TmsDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260908100340_AddEnrollmentManagementLifecycle")]
+    partial class AddEnrollmentManagementLifecycle
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -162,122 +165,24 @@ namespace TmsApi.Infrastructure.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<DateTime>("AssessmentDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<string>("AssessmentType")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<int>("CourseId")
                         .HasColumnType("integer");
 
-                    b.Property<DateTime>("CreatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("CreatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("character varying(1000)");
-
-                    b.Property<DateTime?>("DueDate")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsArchived")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("IsPublished")
-                        .HasColumnType("boolean");
-
-                    b.Property<DateTime?>("StartDate")
-                        .HasColumnType("timestamp with time zone");
+                    b.Property<decimal>("MaxScore")
+                        .HasColumnType("numeric");
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("character varying(200)");
+                        .HasColumnType("text");
 
-                    b.Property<decimal>("TotalMarks")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("UpdatedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("WeightPercentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
+                    b.Property<decimal>("Weight")
+                        .HasColumnType("numeric");
 
                     b.HasKey("Id");
 
                     b.HasIndex("CourseId");
 
-                    b.ToTable("Assessments", (string)null);
-                });
-
-            modelBuilder.Entity("TmsApi.Domain.Entities.AssessmentResult", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("integer");
-
-                    NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
-
-                    b.Property<int>("AssessmentId")
-                        .HasColumnType("integer");
-
-                    b.Property<int>("EnrollmentId")
-                        .HasColumnType("integer");
-
-                    b.Property<string>("Feedback")
-                        .HasColumnType("text");
-
-                    b.Property<string>("Grade")
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)");
-
-                    b.Property<DateTime>("GradedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.Property<Guid?>("GradedBy")
-                        .HasColumnType("uuid");
-
-                    b.Property<decimal>("MarksObtained")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
-
-                    b.Property<decimal>("Percentage")
-                        .HasPrecision(5, 2)
-                        .HasColumnType("numeric(5,2)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<int>("StudentId")
-                        .HasColumnType("integer");
-
-                    b.Property<DateTime?>("UpdatedAt")
-                        .HasColumnType("timestamp with time zone");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("EnrollmentId");
-
-                    b.HasIndex("StudentId");
-
-                    b.HasIndex("AssessmentId", "StudentId")
-                        .IsUnique();
-
-                    b.ToTable("AssessmentResults", (string)null);
+                    b.ToTable("Assessments");
                 });
 
             modelBuilder.Entity("TmsApi.Domain.Entities.Certificate", b =>
@@ -834,33 +739,6 @@ namespace TmsApi.Infrastructure.Migrations
                     b.Navigation("Course");
                 });
 
-            modelBuilder.Entity("TmsApi.Domain.Entities.AssessmentResult", b =>
-                {
-                    b.HasOne("TmsApi.Domain.Entities.Assessment", "Assessment")
-                        .WithMany("Results")
-                        .HasForeignKey("AssessmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TmsApi.Domain.Entities.Enrollment", "Enrollment")
-                        .WithMany()
-                        .HasForeignKey("EnrollmentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("TmsApi.Domain.Entities.Student", "Student")
-                        .WithMany()
-                        .HasForeignKey("StudentId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Assessment");
-
-                    b.Navigation("Enrollment");
-
-                    b.Navigation("Student");
-                });
-
             modelBuilder.Entity("TmsApi.Domain.Entities.Certificate", b =>
                 {
                     b.HasOne("TmsApi.Domain.Entities.Course", "Course")
@@ -924,11 +802,6 @@ namespace TmsApi.Infrastructure.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("Department");
-                });
-
-            modelBuilder.Entity("TmsApi.Domain.Entities.Assessment", b =>
-                {
-                    b.Navigation("Results");
                 });
 
             modelBuilder.Entity("TmsApi.Domain.Entities.Course", b =>

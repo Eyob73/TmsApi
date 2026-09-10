@@ -22,9 +22,14 @@ public class EnrollmentsController(
     [HttpPost("{id}/approve")]
     public async Task<IActionResult> Approve(string id, CancellationToken ct)
     {
-        // Your existing approval logic ...
-        // After the database commit succeeds, broadcast to all connected Angular clients
-        await hubContext.Clients.All.ReceiveEnrollmentStatusUpdated(id, "Approved");
+        if (int.TryParse(id, out var enrollmentId))
+        {
+            await enrollmentService.ApproveEnrollmentAsync(enrollmentId, "Admin", ct);
+        }
+        else
+        {
+            await hubContext.Clients.All.ReceiveEnrollmentStatusUpdated(id, "Approved");
+        }
         return NoContent();
     }
 

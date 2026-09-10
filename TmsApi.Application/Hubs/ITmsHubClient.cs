@@ -1,3 +1,5 @@
+using System.Threading.Tasks;
+
 namespace TmsApi.Application.Hubs;
 
 public interface ITmsHubClient
@@ -6,8 +8,10 @@ public interface ITmsHubClient
     Task ReceiveCourseUpdate(string courseCode, string message);
     Task ReceiveGradePosted(string courseCode, int studentId, decimal grade);
 
-    // File: TmsApi.Application/Hubs/ITmsHubClient.cs
-
-    // New: broadcast enrollment status changes to all connected clients
+    // Real-time enrollment lifecycle events
+    Task ReceiveEnrollmentCreated(int enrollmentId, int studentId, int courseId, string status);
+    Task ReceiveEnrollmentApproved(int enrollmentId);
+    Task ReceiveEnrollmentRejected(int enrollmentId, string? reason);
+    Task ReceiveEnrollmentCancelled(int enrollmentId);
     Task ReceiveEnrollmentStatusUpdated(string enrollmentId, string status);
 }

@@ -7,6 +7,8 @@ public record CourseDetailDto
     public required string Title { get; init; }
     public int? MaxCapacity { get; init; }
     public int? EnrollmentCount { get; init; }
+    public string? InstructorId { get; init; }
+    public string? InstructorName { get; init; }
     public required IReadOnlyList<LinkDto> Links { get; init; }
 }
 

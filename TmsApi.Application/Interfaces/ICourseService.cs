@@ -27,4 +27,7 @@ public interface ICourseService
     );
     Task<CourseResponseDto?> GetByCodeAsync(string code, CancellationToken cancellationToken);
     Task UpdateAsync(Course course, CancellationToken ct = default);
+    Task<CourseResponseDto> AssignInstructorAsync(int id, string instructorId, CancellationToken ct = default);
+    Task<CourseResponseDto> RemoveInstructorAsync(int id, CancellationToken ct = default);
+    Task<IReadOnlyList<CourseResponseDto>> GetCoursesByInstructorAsync(string instructorId, CancellationToken ct = default);
 }

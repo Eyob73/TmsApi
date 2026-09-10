@@ -303,6 +303,8 @@ builder.Services.AddScoped<IProgramService, ProgramService>();
 builder.Services.AddScoped<IReportsService, ReportsService>();
 builder.Services.AddScoped<IAdminService, AdminService>();
 builder.Services.AddScoped<IUserService, UserService>();
+builder.Services.AddScoped<IAssessmentService, AssessmentService>();
+builder.Services.AddSingleton<TmsApi.Application.Grading.GradingService>();
 
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();

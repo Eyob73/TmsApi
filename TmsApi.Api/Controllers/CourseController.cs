@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using TmsApi.Application.DTOs;
@@ -227,4 +228,64 @@ public class CoursesController : ControllerBase
             );
         }
     }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPost("{id:int}/instructor")]
+    [ProducesResponseType(typeof(CourseResponseDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> AssignInstructor(int id, [FromBody] AssignInstructorRequest request, [FromServices] Microsoft.AspNetCore.Identity.UserManager<TmsUser> userManager, CancellationToken ct)
+    {
+        var user = await userManager.FindByIdAsync(request.InstructorId);
+        if (user == null) return BadRequest(new { detail = "Instructor not found." });
+        if (!await userManager.IsInRoleAsync(user, "Instructor") && !await userManager.IsInRoleAsync(user, "Teacher"))
+            return BadRequest(new { detail = "User must have Instructor role." });
+
+        try
+        {
+            var updated = await CourseService.AssignInstructorAsync(id, request.InstructorId, ct);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpPut("{id:int}/instructor")]
+    [ProducesResponseType(typeof(CourseResponseDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ChangeInstructor(int id, [FromBody] AssignInstructorRequest request, [FromServices] Microsoft.AspNetCore.Identity.UserManager<TmsUser> userManager, CancellationToken ct)
+    {
+        return await AssignInstructor(id, request, userManager, ct);
+    }
+
+    [Authorize(Roles = "Admin")]
+    [HttpDelete("{id:int}/instructor")]
+    [ProducesResponseType(typeof(CourseResponseDto), StatusCodes.Status200OK)]
+    public async Task<IActionResult> RemoveInstructor(int id, CancellationToken ct)
+    {
+        try
+        {
+            var updated = await CourseService.RemoveInstructorAsync(id, ct);
+            return Ok(updated);
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
+
+    [Authorize(Roles = "Instructor,Teacher")]
+    [HttpGet("me")]
+    [ProducesResponseType(typeof(IReadOnlyList<CourseResponseDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMyCourses(CancellationToken ct)
+    {
+        var userId = User.FindFirstValue(System.Security.Claims.ClaimTypes.NameIdentifier);
+        if (userId == null) return Unauthorized();
+
+        var courses = await CourseService.GetCoursesByInstructorAsync(userId, ct);
+        return Ok(courses);
+    }
 }
+
+
+

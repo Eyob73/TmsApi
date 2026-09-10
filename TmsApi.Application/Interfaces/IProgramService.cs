@@ -21,5 +21,6 @@ public interface IProgramService
         PatchProgramRequest request,
         CancellationToken ct = default
     );
+    Task DeleteAsync(Guid id, CancellationToken ct = default);
     Task<bool> NameExistsAsync(string name, CancellationToken ct = default);
 }

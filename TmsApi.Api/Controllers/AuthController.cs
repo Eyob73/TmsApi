@@ -103,16 +103,29 @@ public class AuthController : ControllerBase
         };
         _context.RefreshTokens.Add(refreshToken);
         await _context.SaveChangesAsync();
-        return Ok(new { accessToken, refreshToken = refreshToken.Token });
+
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = refreshToken.ExpiresAt
+        };
+        Response.Cookies.Append("refreshToken", refreshToken.Token, cookieOptions);
+
+        return Ok(new { accessToken });
     }
 
-    public record RefreshRequest(string RefreshToken);
-
     [HttpPost("refresh")]
-    public async Task<IActionResult> Refresh([FromBody] RefreshRequest request)
+    public async Task<IActionResult> Refresh()
     {
+        var requestRefreshToken = Request.Cookies["refreshToken"];
+        if (string.IsNullOrEmpty(requestRefreshToken))
+        {
+            return Unauthorized(new { detail = "Refresh token is missing." });
+        }
+
         var storedToken = await _context.RefreshTokens.FirstOrDefaultAsync(rt =>
-            rt.Token == request.RefreshToken
+            rt.Token == requestRefreshToken
         );
         if (storedToken == null)
         {
@@ -129,12 +142,14 @@ public class AuthController : ControllerBase
                 t.IsRevoked = true;
             }
             await _context.SaveChangesAsync();
+            Response.Cookies.Delete("refreshToken", new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Lax });
             return Unauthorized(
                 new { detail = "Token theft detected. All user sessions revoked." }
             );
         }
         if (storedToken.IsRevoked || storedToken.ExpiresAt < DateTime.UtcNow)
         {
+            Response.Cookies.Delete("refreshToken", new CookieOptions { HttpOnly = true, SameSite = SameSiteMode.Lax });
             return Unauthorized(new { detail = "Refresh token expired or revoked." });
         }
         // Mark current token as used
@@ -153,6 +168,26 @@ public class AuthController : ControllerBase
         var user = await _userManager.FindByIdAsync(storedToken.UserId);
         var roles = await _userManager.GetRolesAsync(user!);
         var newAccessToken = _tokenService.GenerateJwt(user!, roles);
-        return Ok(new { accessToken = newAccessToken, refreshToken = newRefreshToken.Token });
+        
+        var cookieOptions = new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax,
+            Expires = newRefreshToken.ExpiresAt
+        };
+        Response.Cookies.Append("refreshToken", newRefreshToken.Token, cookieOptions);
+        
+        return Ok(new { accessToken = newAccessToken });
+    }
+
+    [HttpPost("logout")]
+    public IActionResult Logout()
+    {
+        Response.Cookies.Delete("refreshToken", new CookieOptions
+        {
+            HttpOnly = true,
+            SameSite = SameSiteMode.Lax
+        });
+        return Ok(new { message = "Logged out successfully." });
     }
 }

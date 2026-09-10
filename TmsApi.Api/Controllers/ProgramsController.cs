@@ -133,4 +133,20 @@ public class ProgramsController(IProgramService programService) : ControllerBase
             );
         }
     }
+
+    [HttpDelete("{id:guid}")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(typeof(ProblemDetails), StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> DeleteProgram(Guid id, CancellationToken ct)
+    {
+        try
+        {
+            await programService.DeleteAsync(id, ct);
+            return NoContent();
+        }
+        catch (KeyNotFoundException)
+        {
+            return NotFound();
+        }
+    }
 }

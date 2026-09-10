@@ -19,9 +19,16 @@ public class AssessmentsController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<ActionResult<IReadOnlyList<AssessmentDto>>> GetAssessments([FromQuery] int? courseId, CancellationToken ct)
+    public async Task<ActionResult<IReadOnlyList<AssessmentDto>>> GetAssessments([FromQuery] int? courseId, [FromQuery] string? instructorId, CancellationToken ct)
     {
-        var assessments = await _assessmentService.GetAssessmentsAsync(courseId, ct);
+        // If the caller is an Instructor (not Admin), scope results to their own courses
+        var resolvedInstructorId = instructorId;
+        if (User.IsInRole("Instructor") && !User.IsInRole("Admin"))
+        {
+            resolvedInstructorId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        }
+
+        var assessments = await _assessmentService.GetAssessmentsAsync(courseId, resolvedInstructorId, ct);
         return Ok(assessments);
     }
 

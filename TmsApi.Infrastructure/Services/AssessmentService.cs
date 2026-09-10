@@ -24,7 +24,7 @@ public class AssessmentService : IAssessmentService
         _gradingService = gradingService;
     }
 
-    public async Task<IReadOnlyList<AssessmentDto>> GetAssessmentsAsync(int? courseId, CancellationToken ct)
+    public async Task<IReadOnlyList<AssessmentDto>> GetAssessmentsAsync(int? courseId, string? instructorId, CancellationToken ct)
     {
         var query = _dbContext.Assessments
             .Include(a => a.Course)
@@ -33,6 +33,11 @@ public class AssessmentService : IAssessmentService
         if (courseId.HasValue)
         {
             query = query.Where(a => a.CourseId == courseId.Value);
+        }
+
+        if (!string.IsNullOrEmpty(instructorId))
+        {
+            query = query.Where(a => a.Course.InstructorId == instructorId);
         }
 
         var assessments = await query.ToListAsync(ct);

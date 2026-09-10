@@ -7,7 +7,7 @@ namespace TmsApi.Application.Interfaces;
 
 public interface IAssessmentService
 {
-    Task<IReadOnlyList<AssessmentDto>> GetAssessmentsAsync(int? courseId, CancellationToken ct);
+    Task<IReadOnlyList<AssessmentDto>> GetAssessmentsAsync(int? courseId, string? instructorId, CancellationToken ct);
     Task<AssessmentDto?> GetAssessmentByIdAsync(int id, CancellationToken ct);
     Task<AssessmentDto> CreateAssessmentAsync(CreateAssessmentDto request, string userId, CancellationToken ct);
     Task<AssessmentDto> UpdateAssessmentAsync(int id, UpdateAssessmentDto request, string userId, CancellationToken ct);

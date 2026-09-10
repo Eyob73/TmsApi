@@ -231,6 +231,16 @@ public class ProgramService(TmsDbContext context) : IProgramService
         return await context.Programs.AnyAsync(p => p.Name == normalizedName, ct);
     }
 
+    public async Task DeleteAsync(Guid id, CancellationToken ct = default)
+    {
+        var entity =
+            await context.Programs.FirstOrDefaultAsync(p => p.Id == id, ct)
+            ?? throw new KeyNotFoundException($"Program '{id}' was not found.");
+
+        context.Programs.Remove(entity);
+        await context.SaveChangesAsync(ct);
+    }
+
     private ProgramDto MapToDto(Program entity)
     {
         return new ProgramDto(

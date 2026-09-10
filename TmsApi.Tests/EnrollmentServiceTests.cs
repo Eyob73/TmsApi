@@ -16,12 +16,15 @@ using TmsApi.Infrastructure.Persistence;
 using TmsApi.Infrastructure.Services;
 using Xunit;
 
+using TmsApi.Application.Interfaces;
+
 namespace TmsApi.Tests;
 
 public class EnrollmentServiceTests : IDisposable
 {
     private readonly TmsDbContext _context;
     private readonly IHubContext<TmsHub, ITmsHubClient> _hubContext;
+    private readonly INotificationService _notificationService;
     private readonly EnrollmentService _service;
 
     public EnrollmentServiceTests()
@@ -41,10 +44,13 @@ public class EnrollmentServiceTests : IDisposable
         clients.Group(Arg.Any<string>()).Returns(groupProxy);
         _hubContext.Clients.Returns(clients);
 
+        _notificationService = Substitute.For<INotificationService>();
+
         _service = new EnrollmentService(
             _context,
             _hubContext,
-            NullLogger<EnrollmentService>.Instance
+            NullLogger<EnrollmentService>.Instance,
+            _notificationService
         );
     }
 
@@ -62,8 +68,8 @@ public class EnrollmentServiceTests : IDisposable
         {
             Id = 1,
             RegistrationNumber = "STU-001",
-            Name = "John Doe",
-            Email = "john.doe@test.edu",
+            Name = "Abebe",
+            Email = "Abebe.doe@test.edu",
             GPA = 3.5m,
             IsActive = true,
         };

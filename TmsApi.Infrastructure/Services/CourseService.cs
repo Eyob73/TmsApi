@@ -36,8 +36,7 @@ public class CourseService(
                 c.CourseName,
                 c.Description,
                 c.Credits,
-                c.DepartmentId,
-                c.ProgramId,
+                c.DepartmentId, c.Department != null ? c.Department.Name : null, c.ProgramId, c.Program != null ? c.Program.Name : null,
                 c.Level,
                 c.Semester,
                 c.CourseType,
@@ -72,8 +71,7 @@ public class CourseService(
                 c.CourseName,
                 c.Description,
                 c.Credits,
-                c.DepartmentId,
-                c.ProgramId,
+                c.DepartmentId, c.Department != null ? c.Department.Name : null, c.ProgramId, c.Program != null ? c.Program.Name : null,
                 c.Level,
                 c.Semester,
                 c.CourseType,
@@ -134,8 +132,7 @@ public class CourseService(
                     c.CourseName,
                     c.Description,
                     c.Credits,
-                    c.DepartmentId,
-                    c.ProgramId,
+                    c.DepartmentId, c.Department != null ? c.Department.Name : null, c.ProgramId, c.Program != null ? c.Program.Name : null,
                     c.Level,
                     c.Semester,
                     c.CourseType,
@@ -187,8 +184,7 @@ public class CourseService(
                 c.CourseName,
                 c.Description,
                 c.Credits,
-                c.DepartmentId,
-                c.ProgramId,
+                c.DepartmentId, c.Department != null ? c.Department.Name : null, c.ProgramId, c.Program != null ? c.Program.Name : null,
                 c.Level,
                 c.Semester,
                 c.CourseType,
@@ -385,8 +381,7 @@ public class CourseService(
                 c.CourseName,
                 c.Description,
                 c.Credits,
-                c.DepartmentId,
-                c.ProgramId,
+                c.DepartmentId, c.Department != null ? c.Department.Name : null, c.ProgramId, c.Program != null ? c.Program.Name : null,
                 c.Level,
                 c.Semester,
                 c.CourseType,
@@ -424,8 +419,7 @@ public class CourseService(
                         c.CourseName,
                         c.Description,
                         c.Credits,
-                        c.DepartmentId,
-                        c.ProgramId,
+                        c.DepartmentId, c.Department != null ? c.Department.Name : null, c.ProgramId, c.Program != null ? c.Program.Name : null,
                         c.Level,
                         c.Semester,
                         c.CourseType,
@@ -472,7 +466,7 @@ public class CourseService(
         return await context.Courses.AsNoTracking()
             .Where(c => c.InstructorId == instructorId)
             .Select(c => new CourseResponseDto(
-                c.Id, c.CourseCode, c.CourseName, c.Description, c.Credits, c.DepartmentId, c.ProgramId,
+                c.Id, c.CourseCode, c.CourseName, c.Description, c.Credits, c.DepartmentId, c.Department != null ? c.Department.Name : null, c.ProgramId, c.Program != null ? c.Program.Name : null,
                 c.Level, c.Semester, c.CourseType, c.PrerequisiteCourseId, c.DurationHours, c.Status,
                 c.IsPublished, c.CreatedAt, c.UpdatedAt, c.CreatedBy, c.UpdatedBy, c.IsDeleted, c.DeletedAt,
                 c.InstructorId, context.Users.Where(u => u.Id == c.InstructorId).Select(u => u.FirstName + " " + u.LastName).FirstOrDefault()))
@@ -482,5 +476,6 @@ public class CourseService(
 public record CourseDto(int Id, string Code, string Title, int MaxCapacity);
 
 public record TopCourseDto(string Title, int EnrollmentCount);
+
 
 

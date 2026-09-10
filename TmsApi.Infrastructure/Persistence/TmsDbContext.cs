@@ -18,6 +18,9 @@ public class TmsDbContext : IdentityDbContext<TmsUser>
     public DbSet<Assessment> Assessments => Set<Assessment>();
     public DbSet<AssessmentResult> AssessmentResults => Set<AssessmentResult>();
     public DbSet<RefreshToken> RefreshTokens { get; set; }
+    public DbSet<SystemSetting> SystemSettings => Set<SystemSetting>();
+    public DbSet<UserSetting> UserSettings => Set<UserSetting>();
+    public DbSet<Notification> Notifications => Set<Notification>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

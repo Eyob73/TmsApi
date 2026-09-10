@@ -30,6 +30,7 @@ using TmsApi.Api.Controllers;
 using TmsApi.Api.ExceptionHandlers;
 using TmsApi.Api.Filters;
 using TmsApi.Api.Hubs;
+using Microsoft.AspNetCore.SignalR;
 using TmsApi.Api.Middlewares;
 using TmsApi.Api.RateLimiting;
 using TmsApi.Application.Behaviors;
@@ -292,6 +293,20 @@ builder
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)
             ),
         };
+
+        options.Events = new JwtBearerEvents
+        {
+            OnMessageReceived = context =>
+            {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrEmpty(accessToken) && path.StartsWithSegments("/hubs"))
+                {
+                    context.Token = accessToken;
+                }
+                return Task.CompletedTask;
+            }
+        };
     });
 
 builder.Services.AddSingleton<EnrollmentWorker>();
@@ -309,12 +324,14 @@ builder.Services.AddSingleton<TmsApi.Application.Grading.GradingService>();
 builder.Services.AddScoped<IEnrollmentRepository, EnrollmentRepository>();
 builder.Services.AddScoped<ICourseRepository, CourseRepository>();
 builder.Services.AddScoped<ICachedCourseService, CachedCourseService>();
+builder.Services.AddScoped<INotificationService, NotificationService>();
 
 builder.Services.AddSingleton<ITranscriptStatusStore, InMemoryTranscriptStatusStore>();
 
 builder.Services.AddHostedService<TranscriptWorker>();
 
 builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserIdProvider, NameIdUserIdProvider>();
 
 // builder.Services.AddSignalR().AddStackExchangeRedis(
 //     builder.Configuration.GetConnectionString("Redis")!,
@@ -484,8 +501,6 @@ app.UseHttpsRedirection();
 app.UseRouting();
 
 app.UseCors("TmsClient");
-
-app.MapHub<TmsHub>("/hubs/tms").RequireCors("TmsClient");
 
 app.UseRateLimiter();
 

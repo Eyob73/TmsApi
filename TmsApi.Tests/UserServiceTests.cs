@@ -68,11 +68,11 @@ public class UserServiceTests : IDisposable
     {
         var request = new CreateUserRequest
         {
-            UserName = "johndoe",
-            Email = "john@example.com",
+            UserName = "Abebe",
+            Email = "Abebe@example.com",
             Password = "Password123!",
-            FirstName = "John",
-            LastName = "Doe",
+            FirstName = "Abebe",
+            LastName = "Kebede",
             PhoneNumber = "+1234567890",
             Department = "Computer Science",
             Roles = ["Instructor"],
@@ -83,10 +83,10 @@ public class UserServiceTests : IDisposable
 
         Assert.True(result.IsSuccess);
         Assert.NotNull(result.Value);
-        Assert.Equal("johndoe", result.Value.UserName);
-        Assert.Equal("john@example.com", result.Value.Email);
-        Assert.Equal("John", result.Value.FirstName);
-        Assert.Equal("Doe", result.Value.LastName);
+        Assert.Equal("Abebe", result.Value.UserName);
+        Assert.Equal("Abebe@example.com", result.Value.Email);
+        Assert.Equal("Abebe", result.Value.FirstName);
+        Assert.Equal("Kebede", result.Value.LastName);
         Assert.Contains("Instructor", result.Value.Roles);
         Assert.True(result.Value.IsActive);
 

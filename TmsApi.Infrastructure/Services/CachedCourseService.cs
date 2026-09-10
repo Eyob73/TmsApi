@@ -32,8 +32,7 @@ public class CachedCourseService(
                     course.CourseName,
                     course.Description,
                     course.Credits,
-                    course.DepartmentId,
-                    course.ProgramId,
+                    course.DepartmentId, course.Department?.Name, course.ProgramId, course.Program?.Name,
                     course.Level,
                     course.Semester,
                     course.CourseType,
@@ -84,8 +83,7 @@ public class CachedCourseService(
                         c.CourseName,
                         c.Description,
                         c.Credits,
-                        c.DepartmentId,
-                        c.ProgramId,
+                        c.DepartmentId, c.Department?.Name, c.ProgramId, c.Program?.Name,
                         c.Level,
                         c.Semester,
                         c.CourseType,
@@ -123,4 +121,5 @@ public class CachedCourseService(
         await cache.RemoveByTagAsync(CacheKeys.CoursesTag, ct);
     }
 }
+
 

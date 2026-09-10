@@ -1,4 +1,5 @@
 using System.Threading.Tasks;
+using TmsApi.Application.DTOs;
 
 namespace TmsApi.Application.Hubs;
 
@@ -14,4 +15,7 @@ public interface ITmsHubClient
     Task ReceiveEnrollmentRejected(int enrollmentId, string? reason);
     Task ReceiveEnrollmentCancelled(int enrollmentId);
     Task ReceiveEnrollmentStatusUpdated(string enrollmentId, string status);
+
+    // Real-time notification push
+    Task ReceiveNotification(NotificationDto notification);
 }

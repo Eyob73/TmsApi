@@ -24,15 +24,19 @@ public class EnrollmentService : IEnrollmentService
     private readonly IHubContext<TmsHub, ITmsHubClient> _hubContext;
     private readonly ILogger<EnrollmentService> _logger;
 
+    private readonly INotificationService _notificationService;
+
     public EnrollmentService(
         TmsDbContext context,
         IHubContext<TmsHub, ITmsHubClient> hubContext,
-        ILogger<EnrollmentService> logger
+        ILogger<EnrollmentService> logger,
+        INotificationService notificationService
     )
     {
         _context = context;
         _hubContext = hubContext;
         _logger = logger;
+        _notificationService = notificationService;
     }
 
     public async Task<int> GetOrCreateStudentForUserAsync(
@@ -261,6 +265,25 @@ public class EnrollmentService : IEnrollmentService
         {
             await _hubContext.Clients.All.ReceiveEnrollmentCreated(enrollment.Id, studentId, courseId, "Pending");
             await _hubContext.Clients.All.ReceiveEnrollmentStatusUpdated(enrollment.Id.ToString(), "Pending");
+
+            // Persist notification for admins
+            var admins = await _context.Users
+                .Join(_context.UserRoles, u => u.Id, ur => ur.UserId, (u, ur) => new { u, ur })
+                .Join(_context.Roles, x => x.ur.RoleId, r => r.Id, (x, r) => new { x.u, RoleName = r.Name })
+                .Where(x => x.RoleName == "Admin")
+                .Select(x => x.u.Id)
+                .ToListAsync(ct);
+
+            foreach (var adminId in admins)
+            {
+                await _notificationService.CreateAsync(
+                    adminId,
+                    "New Enrollment Request",
+                    $"{student.Name} requested enrollment in {course.CourseName}.",
+                    "Enrollment",
+                    enrollment.Id.ToString(),
+                    ct);
+            }
         }
         catch (Exception ex)
         {
@@ -535,6 +558,19 @@ public class EnrollmentService : IEnrollmentService
             {
                 await _hubContext.Clients.All.ReceiveEnrollmentApproved(id);
                 await _hubContext.Clients.All.ReceiveEnrollmentStatusUpdated(id.ToString(), "Approved");
+
+                // Notify the student
+                var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == enrollment.StudentId, ct);
+                if (student != null)
+                {
+                    await _notificationService.CreateAsync(
+                        student.UserId,
+                        "Enrollment Approved",
+                        $"Your enrollment in {course.CourseName} has been approved.",
+                        "Enrollment",
+                        id.ToString(),
+                        ct);
+                }
             }
             catch (Exception ex)
             {
@@ -572,6 +608,20 @@ public class EnrollmentService : IEnrollmentService
         {
             await _hubContext.Clients.All.ReceiveEnrollmentRejected(id, reason);
             await _hubContext.Clients.All.ReceiveEnrollmentStatusUpdated(id.ToString(), "Rejected");
+
+            // Notify the student
+            var student = await _context.Students.FirstOrDefaultAsync(s => s.Id == enrollment.StudentId, ct);
+            var course = await _context.Courses.FirstOrDefaultAsync(c => c.Id == enrollment.CourseId, ct);
+            if (student != null)
+            {
+                await _notificationService.CreateAsync(
+                    student.UserId,
+                    "Enrollment Rejected",
+                    $"Your enrollment in {course?.CourseName ?? "a course"} was rejected.{(reason != null ? $" Reason: {reason}" : "")}",
+                    "Enrollment",
+                    id.ToString(),
+                    ct);
+            }
         }
         catch (Exception ex)
         {
